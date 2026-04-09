@@ -44,6 +44,21 @@ The system follows a layered architecture with FastAPI as the web server:
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Workflow State Machines
+
+**Blind Path Navigation** (`workflow_blindpath.py`):
+- `ONBOARDING` → `ROTATION` (对准盲道) → `TRANSLATION` (平移至中心) → `NAVIGATING`
+- `NAVIGATING` → `MANEUVERING_TURN` (转弯检测) → `AVOIDING_OBSTACLE` (避障)
+- Uses Lucas-Kanade optical flow for mask stabilization
+
+**Crossing Navigation** (`workflow_crossstreet.py`):
+- `SEEKING_CROSSWALK` → `WAIT_TRAFFIC_LIGHT` → `CROSSING` → `SEEKING_NEXT_BLINDPATH`
+- Traffic light detection uses HSV color classification with YOLO fallback
+
+**Item Search** (`yolomedia.py`):
+- `SEGMENT` (YOLO-E detection) → `CENTER_GUIDE` (居中引导) → `TRACK` (hand tracking) → `FLASH` (grab confirmation)
+- Falls back to YOLO-E for unknown item categories
+
 ## Key Dependencies
 
 - **Python**: 3.9 - 3.11
@@ -80,6 +95,22 @@ python app_main.py
 
 # With custom API key
 DASHSCOPE_API_KEY=sk-xxxxx python app_main.py
+```
+
+### Testing Individual Modules
+
+```bash
+# Test blind path navigation workflow
+python test_cross_street_blindpath.py
+
+# Test traffic light detection
+python test_traffic_light.py
+
+# Test synchronized audio/video recording
+python test_recorder.py
+
+# Test crosswalk detection
+python test_crosswalk_awareness.py
 ```
 
 ### Docker
@@ -137,13 +168,30 @@ Model download URL: https://www.modelscope.cn/models/archifancy/AIGlasses_for_na
 
 ## Voice Commands (Chinese)
 
+Voice commands are processed in `app_main.py:start_ai_with_text_custom()`. Navigation and AI conversation are mutually exclusive modes.
+
 Navigation control:
-- "开始导航" / "盲道导航" → Start blind path navigation
-- "停止导航" / "结束导航" → Stop navigation
+- "开始导航" / "盲道导航" → Start blind path navigation (switches from CHAT to BLINDPATH_NAV)
+- "停止导航" / "结束导航" → Stop navigation (returns to CHAT mode)
 - "开始过马路" / "帮我过马路" → Start crossing mode
-- "检测红绿灯" / "看红绿灯" → Traffic light detection
+- "过马路结束" / "结束过马路" → Stop crossing mode
+- "立即通过" / "现在通过" → Force crossing (skip traffic light wait)
+
+Traffic light:
+- "检测红绿灯" / "看红绿灯" → Traffic light detection mode
+- "停止检测" / "停止红绿灯" → Stop detection
+
+Item search:
 - "帮我找一下 [物品]" → Search for item (e.g., "帮我找一下红牛")
-- "找到了" / "拿到了" → Confirm item found
+  - Extracts item name using regex pattern `(?:^\s*帮我)?\s*找一下\s*(.+?)(?:。|！|？|$)`
+  - Maps Chinese to English via `qwen_extractor.py` or local mapping
+  - Pauses navigation, enters ITEM_SEARCH state
+- "找到了" / "拿到了" → Confirm item found (resumes previous navigation if any)
+
+AI conversation:
+- Any non-command text → Multimodal chat with Qwen-Omni (image + text input, voice output)
+- During conversation, system is in CHAT mode (navigation paused)
+- Voice output is resampled from 24kHz to 8kHz for ESP32 compatibility
 
 ## Environment Variables
 
@@ -183,10 +231,44 @@ Input (ASR):
 Output (TTS):
 - Qwen-Omni generates speech → `audio_player` → `/stream.wav` → ESP32 speaker
 
+## Key Implementation Details
+
+### Threading Model
+
+- **Main thread**: FastAPI event loop, WebSocket handlers
+- **YOLO/MediaPipe inference**: Runs in main thread (GPU-bound, must not block)
+- **Audio processing**: Separate threads in `audio_player.py` and `asr_core.py`
+- **Frame distribution**: `bridge_io.py` uses producer-consumer pattern with `queue.Queue`
+
+### State Transition Rules
+
+State changes include a cooldown period (`COOLDOWN_SEC = 0.6`) to prevent jitter:
+```python
+self.cooldown_until = time.time() + self.COOLDOWN_SEC
+```
+
+Mode switching behavior (`app_main.py:500-600`):
+1. Starting navigation → stops item search if running
+2. Starting item search → saves current nav state, pauses navigation
+3. Item found → restores previous nav state (if any)
+4. AI conversation → saves nav state, switches to CHAT, restores after
+
+### Audio Format Compatibility
+
+- **Input (ASR)**: PCM 16-bit, 16kHz, mono from ESP32
+- **Output (TTS)**: Qwen-Omni generates 24kHz WAV → resampled to 8kHz for ESP32
+- Resampling uses `audioop.ratecv()` to preserve pitch while changing rate
+
+### Optical Flow Stabilization
+
+Blind path navigation uses Lucas-Kanade optical flow (`cv2.calcOpticalFlowPyrLK`) to stabilize segmentation masks across frames:
+- Configured in `workflow_blindpath.py:FEATURE_PARAMS`
+- Reduces mask jitter caused by camera shake
+
 ## Important Notes
 
 - All voice prompts and UI text are in Chinese
 - GPU strongly recommended (CUDA 11.8+) for real-time performance
 - The system uses threading extensively; use `bridge_io` for thread-safe frame passing
-- Model files are NOT in the repo; must download separately
+- Model files are NOT in the repo; must download separately from ModelScope
 - ESP32 firmware is in `compile/compile.ino`
