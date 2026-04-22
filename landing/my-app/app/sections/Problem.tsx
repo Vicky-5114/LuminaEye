@@ -1,8 +1,21 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import AnimatedCounter from "../components/AnimatedCounter";
 import HUDPanel from "../components/HUDPanel";
+
+// Deterministic pseudo-random values based on index to avoid hydration mismatch
+const PARTICLE_CONFIG = [
+  { left: 12, top: 23, duration: 3.5, delay: 0.2 },
+  { left: 45, top: 67, duration: 4.2, delay: 1.1 },
+  { left: 78, top: 34, duration: 3.8, delay: 0.7 },
+  { left: 23, top: 89, duration: 4.5, delay: 1.5 },
+  { left: 56, top: 12, duration: 3.2, delay: 0.3 },
+  { left: 89, top: 45, duration: 4.0, delay: 1.8 },
+  { left: 34, top: 78, duration: 3.7, delay: 0.9 },
+  { left: 67, top: 56, duration: 4.3, delay: 0.5 },
+];
 
 export default function Problem() {
   return (
@@ -26,23 +39,23 @@ export default function Problem() {
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
         />
 
-        {/* Particle drift */}
-        {[...Array(8)].map((_, i) => (
+        {/* Particle drift - use deterministic values to avoid hydration mismatch */}
+        {PARTICLE_CONFIG.map((config, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-gray/30 rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${config.left}%`,
+              top: `${config.top}%`,
             }}
             animate={{
               y: [0, -30, 0],
               opacity: [0.3, 0.6, 0.3],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: config.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: config.delay,
             }}
           />
         ))}

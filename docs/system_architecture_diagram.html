@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能眼镜导航系统 - 详细原理流程图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+        .subtitle {
+            text-align: center;
+            color: #8892b0;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        .diagram-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .section-title {
+            font-size: 1.4rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, #00d4ff, #7b2cbf);
+            border-radius: 2px;
+        }
+        .mermaid {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            overflow: auto;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .legend-text {
+            font-size: 0.95rem;
+            color: #ccd6f6;
+        }
+        .info-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .info-box.warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+        }
+        .info-box.success {
+            background: rgba(40, 167, 69, 0.1);
+            border-left-color: #28a745;
+        }
+        .state-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .state-table th, .state-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .state-table th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        .state-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .badge-primary { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+        .badge-success { background: rgba(40, 167, 69, 0.2); color: #28a745; }
+        .badge-warning { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .badge-danger { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+        .badge-info { background: rgba(123, 44, 191, 0.2); color: #a855f7; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .diagram-section { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI智能眼镜导航系统</h1>
+        <p class="subtitle">LuminaEye - 详细原理流程图与架构设计</p>
+
+        <!-- 系统整体架构图 -->
+        <div class="diagram-section">
+            <h2 class="section-title">系统整体架构</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Hardware["硬件层 - ESP32-CAM"]
+        CAM["摄像头<br/>OV2640"]
+        MIC["麦克风<br/>PCM16 16kHz"]
+        SPK["扬声器<br/>8kHz输出"]
+        IMU["IMU传感器<br/>加速度+陀螺仪"]
+    end
+
+    subgraph Network["网络通信层"]
+        WS1["/ws/camera<br/>JPEG视频流"]
+        WS2["/ws_audio<br/>音频上行"]
+        WS3["/stream.wav<br/>音频下行"]
+        WS4["/ws/viewer<br/>浏览器查看"]
+        WS5["/ws_ui<br/>状态推送"]
+        UDP["UDP:12345<br/>IMU数据"]
+    end
+
+    subgraph FastAPI["FastAPI服务层"]
+        APP["app_main.py<br/>主服务入口"]
+        BRIDGE["bridge_io.py<br/>帧缓冲分发"]
+        SYNC["sync_recorder.py<br/>同步录制"]
+    end
+
+    subgraph StateMachine["NavigationMaster<br/>状态机管理"]
+        MASTER["导航统领器"]
+        STATES["状态管理:<br/>IDLE → CHAT/BLINDPATH_NAV/<br/>CROSSING/ITEM_SEARCH"]
+    end
+
+    subgraph Workflows["工作流模块"]
+        BLIND["workflow_blindpath.py<br/>盲道导航"]
+        CROSS["workflow_crossstreet.py<br/>过马路导航"]
+        YOLOM["yolomedia.py<br/>物品搜索"]
+    end
+
+    subgraph AI["AI服务层"]
+        YOLO["YOLO-Seg<br/>盲道/斑马线分割"]
+        YOLOE["YOLO-E<br/>障碍物检测"]
+        TRAFFIC["trafficlight_detection<br/>红绿灯检测"]
+        ASR["DashScope ASR<br/>Paraformer实时识别"]
+        OMNI["Qwen-Omni-Turbo<br/>多模态对话"]
+        MP["MediaPipe<br/>手势跟踪"]
+    end
+
+    subgraph Audio["音频处理"]
+        ASR_CORE["asr_core.py<br/>语音识别"]
+        AUDIO_P["audio_player.py<br/>语音播放"]
+        RESAMPLE["24kHz → 8kHz<br/>重采样"]
+    end
+
+    CAM --> WS1
+    MIC --> WS2
+    IMU --> UDP
+
+    WS1 --> APP
+    WS2 --> ASR_CORE
+    UDP --> APP
+
+    APP --> BRIDGE
+    APP --> SYNC
+    APP --> MASTER
+
+    MASTER --> STATES
+    MASTER --> BLIND
+    MASTER --> CROSS
+    MASTER --> YOLOM
+
+    BLIND --> YOLO
+    BLIND --> YOLOE
+    CROSS --> YOLO
+    CROSS --> TRAFFIC
+    CROSS --> YOLOE
+    YOLOM --> YOLOE
+    YOLOM --> MP
+
+    ASR_CORE --> ASR
+    ASR --> APP
+
+    APP --> OMNI
+    OMNI --> AUDIO_P
+    AUDIO_P --> RESAMPLE
+    RESAMPLE --> WS3
+
+    BRIDGE --> WS4
+    APP --> WS5
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6b6b;"></div>
+                    <span class="legend-text">硬件设备层</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4ecdc4;"></div>
+                    <span class="legend-text">网络通信层</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #45b7d1;"></div>
+                    <span class="legend-text">FastAPI服务层</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #96ceb4;"></div>
+                    <span class="legend-text">状态机管理</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #feca57;"></div>
+                    <span class="legend-text">工作流模块</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff9ff3;"></div>
+                    <span class="legend-text">AI服务层</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据流向图 -->
+        <div class="diagram-section">
+            <h2 class="section-title">数据流向与处理流程</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph Input["输入数据"]
+        IMG["JPEG图像<br/>640x480"]
+        PCM["PCM音频<br/>16kHz 16bit"]
+        IMU_DATA["IMU数据<br/>accel+gyro"]
+    end
+
+    subgraph Process["处理流程"]
+        DECODE["JPEG解码<br/>cv2.imdecode"]
+        SEG["YOLO分割<br/>盲道/斑马线检测"]
+        FLOW["光流追踪<br/>Lucas-Kanade"]
+        OBS["障碍物检测<br/>YOLO-E"]
+        GUIDE["导航算法<br/>角度/偏移计算"]
+    end
+
+    subgraph Output["输出结果"]
+        VIS["可视化图像<br/>带引导线/遮罩"]
+        TTS["语音引导<br/>中文提示"]
+        UI["UI状态<br/>WebSocket推送"]
+    end
+
+    IMG --> DECODE
+    DECODE --> SEG
+    SEG --> FLOW
+    SEG --> OBS
+    FLOW --> GUIDE
+    OBS --> GUIDE
+    GUIDE --> VIS
+    GUIDE --> TTS
+    GUIDE --> UI
+            </div>
+        </div>
+
+        <!-- 状态机流程图 -->
+        <div class="diagram-section">
+            <h2 class="section-title">NavigationMaster 状态机</h2>
+            <div class="mermaid">
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> CHAT: 系统启动
+
+    CHAT --> BLINDPATH_NAV: "开始导航"/"盲道导航"
+    CHAT --> CROSSING: "开始过马路"
+    CHAT --> TRAFFIC_LIGHT_DETECTION: "检测红绿灯"
+    CHAT --> ITEM_SEARCH: "帮我找一下xxx"
+
+    BLINDPATH_NAV --> SEEKING_CROSSWALK: 检测到斑马线
+    SEEKING_CROSSWALK --> WAIT_TRAFFIC_LIGHT: 对准完成
+    WAIT_TRAFFIC_LIGHT --> CROSSING: 绿灯/"立即通过"
+
+    CROSSING --> SEEKING_NEXT_BLINDPATH: 过马路结束
+    SEEKING_NEXT_BLINDPATH --> BLINDPATH_NAV: 找到盲道
+
+    BLINDPATH_NAV --> RECOVERY: 盲道丢失
+    SEEKING_CROSSWALK --> RECOVERY: 盲道丢失
+    RECOVERY --> BLINDPATH_NAV: 盲道恢复
+
+    ITEM_SEARCH --> CHAT: "找到了"
+    ITEM_SEARCH --> BLINDPATH_NAV: 恢复导航
+
+    BLINDPATH_NAV --> CHAT: "停止导航"
+    CROSSING --> CHAT: "结束过马路"
+    TRAFFIC_LIGHT_DETECTION --> CHAT: "停止检测"
+
+    CHAT --> CHAT: 普通对话/AI问答
+            </div>
+
+            <div class="info-box">
+                <strong>状态切换规则：</strong>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li>所有状态切换有 0.6秒冷却期，防止抖动</li>
+                    <li>找物品模式会暂停当前导航，保存状态用于恢复</li>
+                    <li>AI对话期间切换到CHAT模式，结束后自动恢复导航</li>
+                </ul>
+            </div>
+
+            <table class="state-table">
+                <tr>
+                    <th>状态</th>
+                    <th>说明</th>
+                    <th>触发语音</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">IDLE</span></td>
+                    <td>空闲/初始化状态</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-primary">CHAT</span></td>
+                    <td>对话模式，只返回原始画面</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-success">BLINDPATH_NAV</span></td>
+                    <td>盲道导航中</td>
+                    <td>"开始导航"/"盲道导航"</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-warning">SEEKING_CROSSWALK</span></td>
+                    <td>寻找并对准斑马线</td>
+                    <td>自动检测到斑马线</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-warning">WAIT_TRAFFIC_LIGHT</span></td>
+                    <td>等待红绿灯</td>
+                    <td>对准完成自动进入</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-success">CROSSING</span></td>
+                    <td>正在过马路</td>
+                    <td>"开始过马路"/绿灯</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-warning">SEEKING_NEXT_BLINDPATH</span></td>
+                    <td>寻找下一段盲道</td>
+                    <td>过马路结束自动进入</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-danger">RECOVERY</span></td>
+                    <td>恢复模式（盲道丢失）</td>
+                    <td>盲道丢失超过阈值</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-primary">TRAFFIC_LIGHT_DETECTION</span></td>
+                    <td>红绿灯检测模式</td>
+                    <td>"检测红绿灯"/"看红绿灯"</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">ITEM_SEARCH</span></td>
+                    <td>找物品模式</td>
+                    <td>"帮我找一下xxx"</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 盲道导航流程 -->
+        <div class="diagram-section">
+            <h2 class="section-title">盲道导航工作流程 (workflow_blindpath)</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph BlindNav["盲道导航状态机"]
+        direction TB
+        ONBOARD["ONBOARDING<br/>初始对准"]
+        ROTATE["ROTATION<br/>旋转对准盲道"]
+        TRANSLATE["TRANSLATION<br/>平移至中心"]
+        NAV["NAVIGATING<br/>导航中"]
+        TURN["MANEUVERING_TURN<br/>转弯检测"]
+        AVOID["AVOIDING_OBSTACLE<br/>避障"]
+    end
+
+    subgraph Process["每帧处理流程"]
+        direction TB
+        GET_FRAME["获取图像帧"]
+        YOLO_SEG["YOLO分割<br/>检测盲道区域"]
+        CHECK["检查检测结果"]
+        OPTICAL["光流追踪<br/>Lucas-Kanade<br/>稳定mask"]
+        CALC["计算导航参数<br/>角度/偏移/曲率"]
+        OBS_CHECK["障碍物检测<br/>YOLO-E"]
+        GUIDE["生成导航指令<br/>左转/右转/直行"]
+        VIZ["可视化渲染<br/>遮罩/引导线/数据面板"]
+    end
+
+    ONBOARD --> ROTATE
+    ROTATE --> TRANSLATE
+    TRANSLATE --> NAV
+    NAV --> TURN
+    TURN --> NAV
+    NAV --> AVOID
+    AVOID --> NAV
+
+    GET_FRAME --> YOLO_SEG
+    YOLO_SEG --> CHECK
+    CHECK -->|检测成功| OPTICAL
+    CHECK -->|检测失败| OPTICAL
+    OPTICAL --> CALC
+    CALC --> OBS_CHECK
+    OBS_CHECK --> GUIDE
+    GUIDE --> VIZ
+            </div>
+
+            <div class="info-box success">
+                <strong>盲道导航关键技术：</strong>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li><strong>光流追踪：</strong>使用Lucas-Kanade算法稳定分割mask，减少相机抖动影响</li>
+                    <li><strong>EMA平滑：</strong>指数移动平均减少mask抖动</li>
+                    <li><strong>中心线提取：</strong>自底向上扫描，多项式拟合盲道中心线</li>
+                    <li><strong>避障：</strong>YOLO-E开放词汇检测，白名单过滤行人/车辆/障碍物</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 过马路导航流程 -->
+        <div class="diagram-section">
+            <h2 class="section-title">过马路导航工作流程 (workflow_crossstreet)</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph CrossStreet["过马路状态机"]
+        direction TB
+        SEEK["SEEKING_CROSSWALK<br/>寻找并对准斑马线"]
+        WAIT["WAIT_TRAFFIC_LIGHT<br/>等待红绿灯"]
+        CROSS["CROSSING<br/>过马路中"]
+        NEXT["SEEKING_NEXT_BLINDPATH<br/>寻找下一段盲道"]
+    end
+
+    subgraph Detect["检测与引导"]
+        direction TB
+        ZEBRA["斑马线检测<br/>YOLO分割"]
+        ALIGN["远距离对准<br/>角度+偏移计算"]
+        TRAFFIC["红绿灯检测<br/>HSV+YOLO"]
+        GREEN["绿灯判定<br/>连续5帧稳定"]
+        CROSS_GUIDE["过马路引导<br/>条纹法线方向"]
+        END_CHECK["结束检测<br/>斑马线消失+盲道出现"]
+    end
+
+    subgraph Visual["可视化元素"]
+        V1["斑马线遮罩<br/>橙色透明"]
+        V2["盲道遮罩<br/>绿色透明"]
+        V3["中心引导线<br/>青色法线"]
+        V4["方向箭头<br/>红色偏角"]
+        V5["障碍物框<br/>近红远黄"]
+        V6["数据面板<br/>右上角"]
+    end
+
+    SEEK -->|检测到斑马线| ALIGN
+    ALIGN -->|对准完成| WAIT
+    WAIT --> TRAFFIC
+    TRAFFIC --> GREEN
+    GREEN -->|绿灯稳定| CROSS
+    CROSS --> CROSS_GUIDE
+    CROSS_GUIDE --> END_CHECK
+    END_CHECK -->|找到盲道| NEXT
+    NEXT -->|上盲道成功| BLIND["返回盲道导航"]
+
+    ZEBRA --> V1
+    ZEBRA --> V2
+    CROSS_GUIDE --> V3
+    CROSS_GUIDE --> V4
+    OBS["障碍物"] --> V5
+    DATA["状态数据"] --> V6
+            </div>
+        </div>
+
+        <!-- 物品搜索流程 -->
+        <div class="diagram-section">
+            <h2 class="section-title">物品搜索工作流程 (yolomedia)</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph ItemSearch["物品搜索流程"]
+        direction TB
+        CMD["语音命令<br/>'帮我找一下xxx'"] --> EXTRACT["提取物品名称<br/>中文→英文映射"]
+        EXTRACT --> YOLO_CHECK{"YOLO类别<br/>是否已知?"}
+
+        YOLO_CHECK -->|是| SEGMENT["SEGMENT<br/>YOLO-E检测"]
+        YOLO_CHECK -->|否| YOLOE_FALLBACK["YOLO-E回退<br/>开放词汇检测"]
+
+        SEGMENT --> CENTER["CENTER_GUIDE<br/>居中引导"]
+        YOLOE_FALLBACK --> CENTER
+
+        CENTER --> HAND["等待手势<br/>MediaPipe手跟踪"]
+        HAND --> GRAB["检测抓取动作<br/>手接近物品"]
+        GRAB --> FLASH["FLASH<br/>闪光确认"]
+        FLASH --> FOUND["'找到了'<br/>结束搜索"]
+    end
+
+    subgraph VisualGuide["视觉引导"]
+        direction TB
+        BOX["物品边界框<br/>带标签和置信度"]
+        ARROW["方向箭头<br/>指示物品位置"]
+        DIST["距离提示<br/>远/中/近"]
+        HAND_VIZ["手部关键点<br/>21个landmark"]
+    end
+
+    CENTER --> BOX
+    CENTER --> ARROW
+    CENTER --> DIST
+    HAND --> HAND_VIZ
+            </div>
+        </div>
+
+        <!-- 音频处理流程 -->
+        <div class="diagram-section">
+            <h2 class="section-title">音频处理流程</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph AudioInput["音频输入 (ASR)"]
+        ESP_MIC["ESP32麦克风<br/>16kHz PCM16"] --> WS_AUDIO["WebSocket /ws_audio"]
+        WS_AUDIO --> ASR_MODULE["asr_core.py"]
+        ASR_MODULE --> DASHSCOPE["DashScope API<br/>Paraformer-v2"]
+        DASHSCOPE --> TEXT["识别文本"]
+    end
+
+    subgraph CommandProcess["命令处理"]
+        TEXT --> CMD_CHECK{"命令类型?"}
+        CMD_CHECK -->|导航命令| NAV_CMD["导航控制<br/>开始/停止/切换模式"]
+        CMD_CHECK -->|找物品| ITEM_CMD["启动物品搜索"]
+        CMD_CHECK -->|普通对话| AI_CHAT["AI多模态对话"]
+    end
+
+    subgraph AudioOutput["音频输出 (TTS)"]
+        AI_CHAT --> OMNI["Qwen-Omni-Turbo"]
+        NAV_CMD --> VOICE_NAV["导航语音<br/>预录制提示"]
+        ITEM_CMD --> VOICE_ITEM["物品搜索语音"]
+
+        OMNI --> WAV24["WAV 24kHz"]
+        VOICE_NAV --> MIX["音频混合<br/>priority队列"]
+        VOICE_ITEM --> MIX
+
+        WAV24 --> RESAMPLE["重采样<br/>24k→8k<br/>audioop.ratecv"]
+        RESAMPLE --> MIX
+        MIX --> STREAM["/stream.wav<br/>WebSocket推送"]
+        STREAM --> ESP_SPK["ESP32扬声器"]
+    end
+            </div>
+        </div>
+
+        <!-- WebSocket通信架构 -->
+        <div class="diagram-section">
+            <h2 class="section-title">WebSocket通信架构</h2>
+            <div class="mermaid">
+flowchart LR
+    subgraph ESP32["ESP32设备"]
+        E_CAM["相机模块"]
+        E_MIC["麦克风"]
+        E_SPK["扬声器"]
+        E_IMU["IMU传感器"]
+    end
+
+    subgraph Server["FastAPI服务器"]
+        direction TB
+        WS_CAMERA["/ws/camera<br/>接收JPEG帧"]
+        WS_AUDIO_UP["/ws_audio<br/>接收音频"]
+        WS_AUDIO_DOWN["/stream.wav<br/>发送音频"]
+        WS_VIEWER["/ws/viewer<br/>广播视频"]
+        WS_UI["/ws_ui<br/>状态更新"]
+
+        PROC["处理引擎"]
+    end
+
+    subgraph Browser["浏览器客户端"]
+        VIEW["视频查看器"]
+        CTRL["控制面板"]
+        STATUS["状态显示"]
+    end
+
+    E_CAM -->|JPEG二进制| WS_CAMERA
+    E_MIC -->|PCM16| WS_AUDIO_UP
+    E_IMU -->|JSON| UDP
+
+    WS_CAMERA --> PROC
+    WS_AUDIO_UP --> PROC
+
+    PROC --> WS_AUDIO_DOWN
+    PROC --> WS_VIEWER
+    PROC --> WS_UI
+
+    WS_AUDIO_DOWN -->|PCM16 8kHz| E_SPK
+    WS_VIEWER --> VIEW
+    WS_UI --> STATUS
+    CTRL -->|控制命令| PROC
+            </div>
+        </div>
+
+        <!-- 模型依赖关系 -->
+        <div class="diagram-section">
+            <h2 class="section-title">AI模型依赖关系</h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph Models["模型文件 (model/目录)"]
+        YOLO_SEG["yolo-seg.pt<br/>盲道分割<br/>类别: 斑马线/盲道"]
+        YOLOE_MODEL["yoloe-11l-seg.pt<br/>开放词汇检测<br/>CLIP文本编码"]
+        SHOPPING["shoppingbest5.pt<br/>物品识别<br/>红牛/AD钙奶等"]
+        TRAFFIC_MODEL["trafficlight.pt<br/>红绿灯检测<br/>红/黄/绿"]
+        HAND_MODEL["hand_landmarker.task<br/>MediaPipe手部"]
+    end
+
+    subgraph Modules["使用模块"]
+        BLIND_MOD["workflow_blindpath"]
+        CROSS_MOD["workflow_crossstreet"]
+        YOLOM_MOD["yolomedia"]
+        TRAFFIC_MOD["trafficlight_detection"]
+    end
+
+    YOLO_SEG --> BLIND_MOD
+    YOLO_SEG --> CROSS_MOD
+    YOLOE_MODEL --> BLIND_MOD
+    YOLOE_MODEL --> CROSS_MOD
+    YOLOE_MODEL --> YOLOM_MOD
+    SHOPPING --> YOLOM_MOD
+    TRAFFIC_MODEL --> TRAFFIC_MOD
+    TRAFFIC_MOD --> CROSS_MOD
+    HAND_MODEL --> YOLOM_MOD
+            </div>
+
+            <div class="info-box warning">
+                <strong>模型下载地址：</strong>
+                <p style="margin-top: 8px;">https://www.modelscope.cn/models/archifancy/AIGlasses_for_navigation</p>
+                <p style="margin-top: 5px; font-size: 0.9rem;">需下载所有模型文件并放置到 model/ 目录下才能正常运行</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            stateDiagram: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+</html>

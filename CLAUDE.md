@@ -8,6 +8,14 @@ This is an AI-powered smart glasses navigation system for the visually impaired 
 
 **Language**: Chinese (中文) - All UI, voice prompts, and documentation are in Chinese.
 
+**Purpose**: This is an educational/research project for learning and communication. It is NOT intended for direct use by visually impaired individuals without significant safety validation.
+
+**System Requirements**:
+- Python 3.9 - 3.11
+- CUDA 11.8+ with NVIDIA GPU (strongly recommended, RTX 3060+)
+- 8GB+ RAM (16GB recommended)
+- 10GB+ disk space for model files
+
 ## Architecture
 
 The system follows a layered architecture with FastAPI as the web server:
@@ -69,6 +77,17 @@ The system follows a layered architecture with FastAPI as the web server:
 - **DashScope**: Alibaba Cloud API for ASR and multimodal chat
 - **OpenCV**: Computer vision operations
 
+## Landing Page
+
+A Next.js 16 marketing site lives in `landing/my-app/` with its own `CLAUDE.md`. It is a separate frontend project (cyberpunk HUD-style design) and is **not** the backend monitoring UI. The backend serves its own web UI from `templates/index.html` and `static/`.
+
+**Landing page commands** (run from `landing/my-app/`):
+```bash
+npm run dev     # localhost:3000
+npm run build   # Static export to dist/
+npm run lint    # ESLint
+```
+
 ## Common Commands
 
 ### Setup
@@ -97,20 +116,20 @@ python app_main.py
 DASHSCOPE_API_KEY=sk-xxxxx python app_main.py
 ```
 
-### Testing Individual Modules
+### Debugging/Testing
+
+No formal test suite exists. Module-specific test files referenced in README (e.g., `test_traffic_light.py`) are not currently in the repo. Use the following for ad-hoc debugging:
 
 ```bash
-# Test blind path navigation workflow
-python test_cross_street_blindpath.py
+# Enable debug logging in app_main.py
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
-# Test traffic light detection
-python test_traffic_light.py
+# Test trafficlight_detection standalone
+python -c "import trafficlight_detection; trafficlight_detection.init_model()"
 
-# Test synchronized audio/video recording
-python test_recorder.py
-
-# Test crosswalk detection
-python test_crosswalk_awareness.py
+# Test crosswalk awareness module
+python crosswalk_awareness.py
 ```
 
 ### Docker
@@ -139,11 +158,17 @@ docker-compose up -d
 | `sync_recorder.py` | Synchronized audio/video recording |
 | `yoloe_backend.py` | YOLO-E backend for open-vocabulary detection |
 | `trafficlight_detection.py` | Traffic light color detection (HSV + YOLO) |
+| `obstacle_detector_client.py` | ObstacleDetectorClient wrapper for YOLO-E |
+| `qwen_extractor.py` | Chinese-to-English item name extraction |
+| `audio_stream.py` | WebSocket audio streaming for `/stream.wav` |
+| `audio_compressor.py` | Audio compression utilities |
+| `crosswalk_awareness.py` | Standalone crosswalk detection test |
 | `compile/` | ESP32 Arduino firmware |
 | `model/` | AI model files (downloaded separately) |
-| `static/` | Web UI assets (JS, CSS) |
-| `templates/` | HTML templates |
+| `static/` | Web UI assets (JS, CSS) for backend monitoring UI |
+| `templates/` | HTML templates (backend UI, not the landing page) |
 | `recordings/` | Saved video/audio recordings |
+| `landing/` | Next.js marketing site (separate frontend project) |
 
 ## Required Model Files
 
@@ -203,6 +228,14 @@ OBSTACLE_MODEL=model/yoloe-11l-seg.pt
 YOLOE_MODEL_PATH=model/yoloe-11l-seg.pt
 TTS_INTERVAL_SEC=1.0                 # Optional: Voice prompt interval
 ENABLE_TTS=true                      # Optional: Enable/disable TTS
+
+# Navigation tuning
+AIGLASS_MASK_MIN_AREA=1500      # Minimum mask area for detection
+AIGLASS_MASK_MORPH=3            # Morphological kernel size
+AIGLASS_MASK_MISS_TTL=6         # Mask miss tolerance in frames
+AIGLASS_PANEL_SCALE=0.65        # Data panel scale factor
+AIGLASS_OBS_INTERVAL=15         # Obstacle detection interval (frames)
+AIGLASS_CROSSWALK_INTERVAL=4    # Crosswalk detection interval (frames)
 ```
 
 ## State Machine States
@@ -264,6 +297,28 @@ Mode switching behavior (`app_main.py:500-600`):
 Blind path navigation uses Lucas-Kanade optical flow (`cv2.calcOpticalFlowPyrLK`) to stabilize segmentation masks across frames:
 - Configured in `workflow_blindpath.py:FEATURE_PARAMS`
 - Reduces mask jitter caused by camera shake
+
+## Extending the System
+
+### Adding a New Voice Command
+
+Edit `app_main.py:start_ai_with_text_custom()` (around line 410). Add your check before the generic AI conversation fallback:
+
+```python
+if "新指令关键词" in user_text:
+    # Execute custom logic
+    await ui_broadcast_final("[系统] 新功能已启动")
+    return
+```
+
+If the command should be allowed during navigation mode, also add it to `allowed_keywords` (around line 420).
+
+### Adding a New Navigation State
+
+1. Add the state constant to `navigation_master.py`
+2. Add transition methods (e.g., `start_your_mode()`, `stop_your_mode()`)
+3. Add processing logic in `process_frame()` under the state branches
+4. Add voice command handling in `app_main.py:start_ai_with_text_custom()`
 
 ## Important Notes
 

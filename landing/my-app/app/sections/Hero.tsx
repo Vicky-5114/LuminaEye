@@ -48,7 +48,7 @@ export default function Hero({ onScrollDown }: HeroProps) {
 
         {/* Left Side - Concept Image */}
         <motion.div
-          className="w-full lg:w-[55%] flex items-center justify-center lg:justify-end lg:pr-8 mb-8 lg:mb-0"
+          className="w-full lg:w-[42%] flex items-center justify-center lg:justify-start lg:pl-4 mb-8 lg:mb-0"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -142,13 +142,22 @@ export default function Hero({ onScrollDown }: HeroProps) {
 
         {/* Right Side - Content */}
         <motion.div
-          className="w-full lg:w-[45%] flex flex-col justify-center lg:pl-8"
+          className="w-full lg:w-[58%] flex flex-col justify-center lg:pl-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Main Content Container */}
-          <div className="max-w-xl">
+            {/* Brand name */}
+            <motion.div
+              className="font-orbitron text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-cyan mb-6 tracking-wider"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.1, delay: 0.75, ease: "easeOut" }}
+            >
+              LuminaEye
+            </motion.div>
+
             {/* Headline with character animation */}
             <motion.h1
               className="font-orbitron text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-wider"
@@ -207,7 +216,6 @@ export default function Hero({ onScrollDown }: HeroProps) {
                 </span>
               ))}
             </motion.div>
-          </div>
         </motion.div>
       </div>
 

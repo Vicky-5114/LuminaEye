@@ -23,11 +23,11 @@ const useCases = [
 ];
 
 const milestones = [
-  { year: "2023", event: "Project Initiated" },
-  { year: "2024 Q1", event: "Prototype Development" },
-  { year: "2024 Q2", event: "First Field Tests" },
-  { year: "2024 Q3", event: "Beta Program Launch" },
-  { year: "2025", event: "Pilot Program Expansion" },
+  { year: "Mid-March 2026", event: "Project Initiated" },
+  { year: "Late March to Mid-April 2026", event: "Prototype Development" },
+  { year: "Mid-April 2026", event: "First Field Tests" },
+  { year: "Late April 2026", event: "Beta Program Launch" },
+  { year: "Early May 2026", event: "Pilot Program Expansion" },
 ];
 
 export default function Impact() {
@@ -122,10 +122,10 @@ export default function Impact() {
                   transition={{ delay: 0.8 + index * 0.1 }}
                 >
                   <div className="w-4 h-4 rounded-full bg-magenta border-4 border-void mx-auto mb-2" />
-                  <div className="font-rajdhani text-magenta text-xs font-bold">
+                  <div className="font-rajdhani text-magenta text-sm font-bold">
                     {milestone.year}
                   </div>
-                  <div className="font-inter text-gray text-xs hidden sm:block max-w-[100px]">
+                  <div className="font-inter text-gray text-sm hidden sm:block max-w-[140px]">
                     {milestone.event}
                   </div>
                 </motion.div>

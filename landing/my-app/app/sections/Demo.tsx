@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import Viewport from "../components/Viewport";
 import HUDPanel from "../components/HUDPanel";
@@ -8,10 +8,8 @@ import { useMousePosition } from "../hooks/useMousePosition";
 
 export default function Demo() {
   const mousePosition = useMousePosition();
-  const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
 
-  // Simulate object detection based on mouse position
-  useEffect(() => {
+  const detectedObjects = useMemo(() => {
     const objects: string[] = [];
 
     if (mousePosition.x < 0.3) {
@@ -28,8 +26,11 @@ export default function Demo() {
       objects.push("SIDEWALK EDGE");
     }
 
-    setDetectedObjects(objects);
-  }, [mousePosition]);
+    return objects;
+  }, [mousePosition.x, mousePosition.y]);
+
+  const overlayAnimate = useMemo(() => ({ opacity: 1 }), []);
+  const itemAnimate = useMemo(() => ({ opacity: 1, x: 0 }), []);
 
   return (
     <section id="demo" className="snap-section relative min-h-screen flex items-center justify-center bg-void px-4 sm:px-6 lg:px-8 py-20">
@@ -82,14 +83,14 @@ export default function Demo() {
             <motion.div
               className="flex flex-wrap gap-2"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={overlayAnimate}
             >
               {detectedObjects.map((obj, index) => (
                 <motion.div
                   key={`${obj}-${index}`}
                   className="px-3 py-1 bg-yellow/20 border border-yellow/50 text-yellow font-rajdhani text-xs rounded"
                   initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  animate={itemAnimate}
                   exit={{ opacity: 0 }}
                 >
                   {obj}
