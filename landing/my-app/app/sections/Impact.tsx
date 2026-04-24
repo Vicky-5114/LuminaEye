@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import AnimatedCounter from "../components/AnimatedCounter";
 import HUDPanel from "../components/HUDPanel";
+import DevelopmentTimeline from "../components/DevelopmentTimeline";
 
 const useCases = [
   {
@@ -22,13 +23,6 @@ const useCases = [
   },
 ];
 
-const milestones = [
-  { year: "Mid-March 2026", event: "Project Initiated" },
-  { year: "Late March to Mid-April 2026", event: "Prototype Development" },
-  { year: "Mid-April 2026", event: "First Field Tests" },
-  { year: "Late April 2026", event: "Beta Program Launch" },
-  { year: "Early May 2026", event: "Pilot Program Expansion" },
-];
 
 export default function Impact() {
   return (
@@ -97,42 +91,8 @@ export default function Impact() {
           ))}
         </div>
 
-        {/* Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-        >
-          <h3 className="font-orbitron text-xl font-bold text-white text-center mb-8">
-            DEVELOPMENT TIMELINE
-          </h3>
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-magenta/30 -translate-y-1/2" />
-
-            <div className="flex justify-between items-center relative">
-              {milestones.map((milestone, index) => (
-                <motion.div
-                  key={milestone.year}
-                  className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.8 + index * 0.1 }}
-                >
-                  <div className="w-4 h-4 rounded-full bg-magenta border-4 border-void mx-auto mb-2" />
-                  <div className="font-rajdhani text-magenta text-sm font-bold">
-                    {milestone.year}
-                  </div>
-                  <div className="font-inter text-gray text-sm hidden sm:block max-w-[140px]">
-                    {milestone.event}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+        {/* Development Timeline */}
+        <DevelopmentTimeline />
       </div>
 
       {/* Section transition text */}
