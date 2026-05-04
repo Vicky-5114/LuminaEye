@@ -161,6 +161,28 @@ export default function CTA() {
           )}
         </motion.div>
 
+        {/* Registration CTAs */}
+        <motion.div
+          className="mt-10 flex flex-wrap justify-center gap-4"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+        >
+          <a
+            href="/login?role=blind"
+            className="px-6 py-3 border border-[var(--color-lime)] text-[var(--color-lime)] hover:bg-[var(--color-lime)] hover:text-black transition-colors font-rajdhani"
+          >
+            盲人用户注册
+          </a>
+          <a
+            href="/login?role=volunteer"
+            className="px-6 py-3 border border-[var(--color-cyan)] text-[var(--color-cyan)] hover:bg-[var(--color-cyan)] hover:text-black transition-colors font-rajdhani"
+          >
+            志愿者注册
+          </a>
+        </motion.div>
+
         {/* Secondary CTAs */}
         <motion.div
           className="mt-10 flex flex-wrap justify-center gap-6"
