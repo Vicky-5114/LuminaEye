@@ -9,15 +9,15 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/forum', blind: '社区论坛', volunteer: '社区论坛' },
-    { href: '/video', blind: '🆘 视频求助', volunteer: '视频协助' },
-    { href: '/map', blind: '附近帮助', volunteer: '援助地图' },
+    { href: '/forum', blind: 'Community', volunteer: 'Community' },
+    { href: '/video', blind: '🆘 Video Help', volunteer: 'Video Assist' },
+    { href: '/map', blind: 'Nearby Help', volunteer: 'Assistance Map' },
   ];
 
   return (
     <nav
       role="navigation"
-      aria-label="主导航"
+      aria-label="Main navigation"
       className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-void)]/90 backdrop-blur border-b border-[var(--color-cyan)]/30"
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -50,14 +50,14 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user && (
             <span className="text-xs text-[var(--color-gray)]">
-              {user.name} ({role === 'blind' ? '盲人用户' : '志愿者'})
+              {user.name} ({role === 'blind' ? 'Blind User' : 'Volunteer'})
             </span>
           )}
           <button
             onClick={logout}
             className="text-xs text-[var(--color-gray)] hover:text-[var(--color-cyan)] focus:outline-none focus:ring-2 focus:ring-[var(--color-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--color-void)] px-2 py-1 rounded"
           >
-            退出
+            Logout
           </button>
         </div>
       </div>

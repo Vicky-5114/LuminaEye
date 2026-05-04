@@ -13,7 +13,7 @@ export interface Comment {
   createdAt: string;
 }
 
-export type PostCategory = '全部' | '求助问答' | '经验分享' | '社区讨论';
+export type PostCategory = 'All' | 'Q&A' | 'Experience' | 'Discussion';
 
 export interface Post {
   id: string;

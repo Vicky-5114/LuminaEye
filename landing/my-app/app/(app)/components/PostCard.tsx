@@ -27,7 +27,7 @@ export default function PostCard({ post }: Props) {
             isBlind ? 'bg-[var(--color-lime)]/20 text-[var(--color-lime)]' : 'bg-[var(--color-cyan)]/20 text-[var(--color-cyan)]'
           }`}
         >
-          {isBlind ? '盲人用户' : '志愿者'}
+          {isBlind ? 'Blind User' : 'Volunteer'}
         </span>
         <span className="text-xs text-[var(--color-gray)] ml-auto">{post.createdAt}</span>
       </div>
