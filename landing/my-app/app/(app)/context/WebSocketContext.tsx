@@ -2,51 +2,143 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useDemoChannel } from './DemoChannelContext';
 
-interface HelpRequest {
+export interface HelpRequest {
   id: string;
   userName: string;
   glassesId: string;
+  timestamp: number;
 }
 
 interface WebSocketContextType {
   connected: boolean;
-  helpRequest: HelpRequest | null;
-  clearHelpRequest: () => void;
+  helpRequests: HelpRequest[];
+  activeCall: HelpRequest | null;
+  acceptHelpRequest: (id: string) => void;
+  ignoreHelpRequest: (id: string) => void;
+  endCall: () => void;
+  myRequestAccepted: boolean;
+  acceptedByVolunteer: string | null;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { connected, lastMessage } = useWebSocket('ws://localhost:8081/ws_ui');
-  const [helpRequest, setHelpRequest] = useState<HelpRequest | null>(null);
+  const { lastMessage: demoMessage, broadcastAccept, broadcastEndCall } = useDemoChannel();
+  const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([]);
+  const [activeCall, setActiveCall] = useState<HelpRequest | null>(null);
+  const [myRequestAccepted, setMyRequestAccepted] = useState(false);
+  const [acceptedByVolunteer, setAcceptedByVolunteer] = useState<string | null>(null);
 
+  // Handle real WebSocket messages
   useEffect(() => {
     if (!lastMessage) return;
     if (lastMessage.type === 'help_request') {
-      setHelpRequest(lastMessage.payload as HelpRequest);
+      const payload = lastMessage.payload as HelpRequest;
+      queueMicrotask(() => {
+        setHelpRequests((prev) => {
+          if (prev.some((r) => r.id === payload.id)) return prev;
+          return [...prev, payload];
+        });
+      });
     }
   }, [lastMessage]);
+
+  // Handle demo channel messages
+  useEffect(() => {
+    if (!demoMessage) return;
+
+    if (demoMessage.type === 'help_request') {
+      const payload = demoMessage.payload;
+      queueMicrotask(() => {
+        setHelpRequests((prev) => {
+          if (prev.some((r) => r.id === payload.id)) return prev;
+          return [...prev, payload];
+        });
+      });
+    }
+
+    if (demoMessage.type === 'accept_help') {
+      const payload = demoMessage.payload;
+      queueMicrotask(() => {
+        setHelpRequests((prev) => prev.filter((r) => r.id !== payload.requestId));
+        setActiveCall((prev) => {
+          if (prev && prev.id === payload.requestId) return prev;
+          const found = helpRequests.find((r) => r.id === payload.requestId);
+          return found || prev;
+        });
+        setMyRequestAccepted(true);
+        setAcceptedByVolunteer(payload.volunteerName);
+      });
+    }
+
+    if (demoMessage.type === 'end_call') {
+      queueMicrotask(() => {
+        setActiveCall(null);
+        setMyRequestAccepted(false);
+        setAcceptedByVolunteer(null);
+      });
+    }
+  }, [demoMessage, helpRequests]);
 
   // Mock mode: simulate help requests when backend is not running
   useEffect(() => {
     if (connected) return;
     const interval = setInterval(() => {
       if (Math.random() > 0.7) {
-        setHelpRequest({
+        const mockReq: HelpRequest = {
           id: `mock-${Date.now()}`,
-          userName: ['小明', '小红', '小刚'][Math.floor(Math.random() * 3)],
+          userName: ['Ming', 'Hong', 'Gang'][Math.floor(Math.random() * 3)],
           glassesId: `GL-2025-${String(Math.floor(Math.random() * 10)).padStart(3, '0')}`,
+          timestamp: Date.now(),
+        };
+        queueMicrotask(() => {
+          setHelpRequests((prev) => {
+            if (prev.some((r) => r.id === mockReq.id)) return prev;
+            return [...prev, mockReq];
+          });
         });
       }
-    }, 45000); // 45s interval
+    }, 45000);
     return () => clearInterval(interval);
   }, [connected]);
 
-  const clearHelpRequest = () => setHelpRequest(null);
+  const acceptHelpRequest = (id: string) => {
+    const request = helpRequests.find((r) => r.id === id);
+    if (!request) return;
+    setHelpRequests((prev) => prev.filter((r) => r.id !== id));
+    setActiveCall(request);
+    broadcastAccept({ requestId: id, volunteerName: 'Volunteer' });
+  };
+
+  const ignoreHelpRequest = (id: string) => {
+    setHelpRequests((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const endCall = () => {
+    if (activeCall) {
+      broadcastEndCall({ requestId: activeCall.id });
+    }
+    setActiveCall(null);
+    setMyRequestAccepted(false);
+    setAcceptedByVolunteer(null);
+  };
 
   return (
-    <WebSocketContext.Provider value={{ connected, helpRequest, clearHelpRequest }}>
+    <WebSocketContext.Provider
+      value={{
+        connected,
+        helpRequests,
+        activeCall,
+        acceptHelpRequest,
+        ignoreHelpRequest,
+        endCall,
+        myRequestAccepted,
+        acceptedByVolunteer,
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   );
