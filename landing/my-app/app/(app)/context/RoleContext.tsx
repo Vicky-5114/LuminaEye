@@ -26,7 +26,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('lumina_user');
+    const stored = sessionStorage.getItem('lumina_user');
     if (stored) {
       const parsed = JSON.parse(stored) as User;
       setUser(parsed);
@@ -35,15 +35,15 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = (newUser: User) => {
-    localStorage.setItem('lumina_user', JSON.stringify(newUser));
-    localStorage.setItem('lumina_role', newUser.role);
+    sessionStorage.setItem('lumina_user', JSON.stringify(newUser));
+    sessionStorage.setItem('lumina_role', newUser.role);
     setUser(newUser);
     setRole(newUser.role);
   };
 
   const logout = () => {
-    localStorage.removeItem('lumina_user');
-    localStorage.removeItem('lumina_role');
+    sessionStorage.removeItem('lumina_user');
+    sessionStorage.removeItem('lumina_role');
     setUser(null);
     setRole(null);
   };
