@@ -2,65 +2,59 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MOCK_LOCATIONS, MapLocation } from './mock-locations';
-
-const AMAP_KEY = 'YOUR_AMAP_KEY'; // Replace with actual key
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 type FilterType = 'all' | 'blind' | 'volunteer' | 'business';
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const leafletMapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.CircleMarker[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedLocation, setSelectedLocation] = useState<MapLocation | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const amapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !mapRef.current) return;
+    if (leafletMapRef.current) return;
 
-    const script = document.createElement('script');
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}`;
-    script.onload = () => setMapLoaded(true);
-    document.head.appendChild(script);
+    const map = L.map(mapRef.current).setView([39.90923, 116.397428], 13);
+    leafletMapRef.current = map;
 
-    return () => { document.head.removeChild(script); };
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    return () => {
+      map.remove();
+      leafletMapRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
-    if (!mapLoaded || !mapRef.current || !(window as any).AMap) return;
+    const map = leafletMapRef.current;
+    if (!map) return;
 
-    const AMap = (window as any).AMap;
-    const map = new AMap.Map(mapRef.current, {
-      zoom: 13,
-      center: [116.397428, 39.90923],
-    });
-    amapRef.current = map;
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
 
     const locations = filter === 'all' ? MOCK_LOCATIONS : MOCK_LOCATIONS.filter((l) => l.type === filter);
 
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
-
     locations.forEach((loc) => {
       const color = loc.type === 'blind' ? '#ff4444' : loc.type === 'volunteer' ? '#00f0ff' : '#ffdd00';
-      const marker = new AMap.Marker({
-        position: [loc.lng, loc.lat],
-        title: loc.name,
-        icon: new AMap.Icon({
-          size: new AMap.Size(24, 24),
-          image: `data:image/svg+xml,${encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="10" fill="${color}"/></svg>`
-          )}`,
-          imageSize: new AMap.Size(24, 24),
-        }),
-      });
+      const marker = L.circleMarker([loc.lat, loc.lng], {
+        radius: 8,
+        color,
+        fillColor: color,
+        fillOpacity: 0.8,
+      }).addTo(map);
 
+      marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
       marker.on('click', () => setSelectedLocation(loc));
-      marker.setMap(map);
       markersRef.current.push(marker);
     });
-  }, [mapLoaded, filter]);
+  }, [filter]);
 
   const filteredLocations = filter === 'all' ? MOCK_LOCATIONS : MOCK_LOCATIONS.filter((l) => l.type === filter);
 
@@ -70,22 +64,29 @@ export default function MapPage() {
     business: MOCK_LOCATIONS.filter((l) => l.type === 'business').length,
   };
 
+  const filterLabels: Record<FilterType, string> = {
+    all: 'All',
+    blind: 'Blind',
+    volunteer: 'Volunteer',
+    business: 'Business',
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[var(--color-cyan)]">援助地图</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-cyan)]">Assistance Map</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode('map')}
             className={`px-3 py-1 text-sm border ${viewMode === 'map' ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'}`}
           >
-            🗺 地图
+            Map
           </button>
           <button
             onClick={() => setViewMode('list')}
             className={`px-3 py-1 text-sm border ${viewMode === 'list' ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'}`}
           >
-            📋 列表
+            List
           </button>
         </div>
       </div>
@@ -99,7 +100,7 @@ export default function MapPage() {
               filter === f ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'
             }`}
           >
-            {f === 'all' ? '全部' : f === 'blind' ? '盲人' : f === 'volunteer' ? '志愿者' : '商家'}
+            {filterLabels[f]}
           </button>
         ))}
       </div>
@@ -107,21 +108,15 @@ export default function MapPage() {
       {viewMode === 'map' ? (
         <div className="relative">
           <div ref={mapRef} className="w-full h-[500px] bg-[var(--color-panel)] border border-[var(--color-gray)]/30" />
-          {!mapLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-panel)]">
-              <p className="text-[var(--color-gray)]">正在加载地图...</p>
-            </div>
-          )}
-
           <div className="absolute bottom-4 left-4 flex gap-2">
             <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-red-400">👁 {counts.blind}</span>
+              <span className="text-red-400">{counts.blind} Blind</span>
             </div>
             <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-[var(--color-cyan)]">🙋 {counts.volunteer}</span>
+              <span className="text-[var(--color-cyan)]">{counts.volunteer} Volunteer</span>
             </div>
             <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-yellow-400">🏪 {counts.business}</span>
+              <span className="text-yellow-400">{counts.business} Business</span>
             </div>
           </div>
         </div>
@@ -136,14 +131,14 @@ export default function MapPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="font-medium">
-                    {loc.type === 'blind' ? '👁' : loc.type === 'volunteer' ? '🙋' : '🏪'} {loc.name}
+                    {loc.type === 'blind' ? 'Blind' : loc.type === 'volunteer' ? 'Volunteer' : 'Business'}: {loc.name}
                   </span>
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
                     loc.type === 'blind' ? 'bg-red-400/20 text-red-400' :
                     loc.type === 'volunteer' ? 'bg-[var(--color-cyan)]/20 text-[var(--color-cyan)]' :
                     'bg-yellow-400/20 text-yellow-400'
                   }`}>
-                    {loc.status || '营业中'}
+                    {loc.status || 'Open'}
                   </span>
                 </div>
                 <span className="text-xs text-[var(--color-gray)]">{loc.description}</span>
@@ -161,18 +156,18 @@ export default function MapPage() {
             <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[var(--color-cyan)]" />
             <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[var(--color-cyan)]" />
 
-            <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-gray)] hover:text-white">✕</button>
+            <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-gray)] hover:text-white">Close</button>
 
             <h3 className="text-xl font-bold mb-2">{selectedLocation.name}</h3>
             <p className="text-sm text-[var(--color-gray)] mb-4">{selectedLocation.description}</p>
 
-            {selectedLocation.phone && <p className="text-sm mb-2">📞 {selectedLocation.phone}</p>}
-            {selectedLocation.jobs && <p className="text-sm mb-4">💼 提供岗位：{selectedLocation.jobs.join('、')}</p>}
+            {selectedLocation.phone && <p className="text-sm mb-2">Phone: {selectedLocation.phone}</p>}
+            {selectedLocation.jobs && <p className="text-sm mb-4">Jobs: {selectedLocation.jobs.join(', ')}</p>}
 
             <div className="flex gap-2">
-              <button className="flex-1 py-2 bg-[var(--color-cyan)] text-black font-bold text-sm">导航前往</button>
+              <button className="flex-1 py-2 bg-[var(--color-cyan)] text-black font-bold text-sm">Navigate</button>
               {selectedLocation.type === 'blind' && (
-                <a href="/video" className="flex-1 py-2 bg-green-600 text-white font-bold text-sm text-center">视频协助</a>
+                <a href="/video" className="flex-1 py-2 bg-green-600 text-white font-bold text-sm text-center">Video Assist</a>
               )}
             </div>
           </div>
