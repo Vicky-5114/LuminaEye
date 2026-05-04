@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MOCK_LOCATIONS, MapLocation } from './mock-locations';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 type FilterType = 'all' | 'blind' | 'volunteer' | 'business';
 
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const leafletMapRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.CircleMarker[]>([]);
+  const leafletMapRef = useRef<any>(null);
+  const LRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedLocation, setSelectedLocation] = useState<MapLocation | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
@@ -19,22 +19,51 @@ export default function MapPage() {
     if (typeof window === 'undefined' || !mapRef.current) return;
     if (leafletMapRef.current) return;
 
-    const map = L.map(mapRef.current).setView([39.90923, 116.397428], 13);
-    leafletMapRef.current = map;
+    let cancelled = false;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+    import('leaflet').then((leafletModule) => {
+      if (cancelled || !mapRef.current) return;
+      const L = leafletModule.default;
+      LRef.current = L;
+
+      const map = L.map(mapRef.current).setView([39.90923, 116.397428], 13);
+      leafletMapRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // Initial markers
+      const locations = filter === 'all' ? MOCK_LOCATIONS : MOCK_LOCATIONS.filter((l) => l.type === filter);
+      locations.forEach((loc) => {
+        const color = loc.type === 'blind' ? '#ff4444' : loc.type === 'volunteer' ? '#00f0ff' : '#ffdd00';
+        const marker = L.circleMarker([loc.lat, loc.lng], {
+          radius: 8,
+          color,
+          fillColor: color,
+          fillOpacity: 0.8,
+        }).addTo(map);
+
+        marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
+        marker.on('click', () => setSelectedLocation(loc));
+        markersRef.current.push(marker);
+      });
+    });
 
     return () => {
-      map.remove();
-      leafletMapRef.current = null;
+      cancelled = true;
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+      }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const map = leafletMapRef.current;
-    if (!map) return;
+    const L = LRef.current;
+    if (!map || !L) return;
 
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
@@ -80,13 +109,13 @@ export default function MapPage() {
             onClick={() => setViewMode('map')}
             className={`px-3 py-1 text-sm border ${viewMode === 'map' ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'}`}
           >
-            Map
+            🗺 Map
           </button>
           <button
             onClick={() => setViewMode('list')}
             className={`px-3 py-1 text-sm border ${viewMode === 'list' ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'}`}
           >
-            List
+            📋 List
           </button>
         </div>
       </div>
@@ -108,15 +137,16 @@ export default function MapPage() {
       {viewMode === 'map' ? (
         <div className="relative">
           <div ref={mapRef} className="w-full h-[500px] bg-[var(--color-panel)] border border-[var(--color-gray)]/30" />
+
           <div className="absolute bottom-4 left-4 flex gap-2">
             <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-red-400">{counts.blind} Blind</span>
+              <span className="text-red-400">👁 {counts.blind}</span>
             </div>
             <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-[var(--color-cyan)]">{counts.volunteer} Volunteer</span>
+              <span className="text-[var(--color-cyan)]">🙋 {counts.volunteer}</span>
             </div>
             <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-yellow-400">{counts.business} Business</span>
+              <span className="text-yellow-400">🏪 {counts.business}</span>
             </div>
           </div>
         </div>
@@ -131,7 +161,7 @@ export default function MapPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="font-medium">
-                    {loc.type === 'blind' ? 'Blind' : loc.type === 'volunteer' ? 'Volunteer' : 'Business'}: {loc.name}
+                    {loc.type === 'blind' ? '👁' : loc.type === 'volunteer' ? '🙋' : '🏪'} {loc.name}
                   </span>
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
                     loc.type === 'blind' ? 'bg-red-400/20 text-red-400' :
@@ -156,13 +186,13 @@ export default function MapPage() {
             <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[var(--color-cyan)]" />
             <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[var(--color-cyan)]" />
 
-            <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-gray)] hover:text-white">Close</button>
+            <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-gray)] hover:text-white">✕</button>
 
             <h3 className="text-xl font-bold mb-2">{selectedLocation.name}</h3>
             <p className="text-sm text-[var(--color-gray)] mb-4">{selectedLocation.description}</p>
 
-            {selectedLocation.phone && <p className="text-sm mb-2">Phone: {selectedLocation.phone}</p>}
-            {selectedLocation.jobs && <p className="text-sm mb-4">Jobs: {selectedLocation.jobs.join(', ')}</p>}
+            {selectedLocation.phone && <p className="text-sm mb-2">📞 {selectedLocation.phone}</p>}
+            {selectedLocation.jobs && <p className="text-sm mb-4">💼 Jobs: {selectedLocation.jobs.join(', ')}</p>}
 
             <div className="flex gap-2">
               <button className="flex-1 py-2 bg-[var(--color-cyan)] text-black font-bold text-sm">Navigate</button>
