@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import CanvasVideoSimulator from './CanvasVideoSimulator';
 
 interface Props {
   url: string;
@@ -11,25 +12,43 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
   const imgRef = useRef<HTMLImageElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [useSimulator, setUseSimulator] = useState(false);
   const [fps, setFps] = useState(0);
   const frameCount = useRef(0);
-  const lastTime = useRef(Date.now());
+  const lastTime = useRef(0);
 
   useEffect(() => {
     const ws = new WebSocket(url);
     ws.binaryType = 'arraybuffer';
     wsRef.current = ws;
 
-    ws.onopen = () => setConnected(true);
-    ws.onclose = () => { setConnected(false); onDisconnect?.(); };
-    ws.onerror = () => setConnected(false);
+    const timeout = setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        setUseSimulator(true);
+      }
+    }, 3000);
+
+    ws.onopen = () => {
+      clearTimeout(timeout);
+      setConnected(true);
+      setUseSimulator(false);
+    };
+    ws.onclose = () => {
+      setConnected(false);
+      setUseSimulator(true);
+      onDisconnect?.();
+    };
+    ws.onerror = () => {
+      setConnected(false);
+      setUseSimulator(true);
+    };
     ws.onmessage = (event) => {
       if (!(event.data instanceof ArrayBuffer)) return;
       const blob = new Blob([event.data], { type: 'image/jpeg' });
-      const url = URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(blob);
       if (imgRef.current) {
-        imgRef.current.src = url;
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        imgRef.current.src = objectUrl;
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
       }
       frameCount.current++;
       const now = Date.now();
@@ -40,27 +59,34 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
       }
     };
 
-    return () => ws.close();
+    return () => {
+      clearTimeout(timeout);
+      ws.close();
+    };
   }, [url, onDisconnect]);
+
+  if (useSimulator) {
+    return <CanvasVideoSimulator onDisconnect={onDisconnect} />;
+  }
 
   return (
     <div className="relative bg-black border border-[var(--color-cyan)]/30">
       <img
         ref={imgRef}
-        alt="实时视频流"
+        alt="Live video stream"
         className="w-full h-full object-contain min-h-[300px]"
       />
       {!connected && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
           <div className="text-center space-y-2">
             <div className="text-[var(--color-cyan)] text-4xl animate-pulse">📡</div>
-            <p className="text-[var(--color-gray)]">等待眼镜连接...</p>
+            <p className="text-[var(--color-gray)]">Waiting for glasses connection...</p>
           </div>
         </div>
       )}
       <div className="absolute top-2 right-2 flex gap-2 text-xs">
         <span className={`px-2 py-0.5 rounded ${connected ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-          {connected ? '实时' : '离线'}
+          {connected ? 'LIVE' : 'OFFLINE'}
         </span>
         <span className="bg-black/70 text-[var(--color-cyan)] px-2 py-0.5 rounded">
           {fps} FPS
