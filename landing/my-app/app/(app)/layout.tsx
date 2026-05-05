@@ -25,10 +25,12 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
 
   const handleIgnore = () => {
     const next = helpRequests[0];
+    console.log('[DEBUG] handleIgnore called, helpRequests:', helpRequests, 'next:', next);
     if (next) ignoreHelpRequest(next.id);
   };
 
   const nextRequest = helpRequests[0] || null;
+  console.log('[DEBUG] LayoutInner render, helpRequests:', helpRequests, 'nextRequest:', nextRequest, 'activeCall:', activeCall);
 
   return (
     <div className="min-h-screen bg-[var(--color-void)] text-white pt-16">

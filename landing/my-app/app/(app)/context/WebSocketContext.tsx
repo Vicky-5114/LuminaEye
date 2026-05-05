@@ -114,17 +114,29 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [helpRequests, broadcastAccept]);
 
   const ignoreHelpRequest = useCallback((id: string) => {
-    setHelpRequests((prev) => prev.filter((r) => r.id !== id));
-  }, []);
+    console.log('[DEBUG] ignoreHelpRequest called, id:', id, 'current helpRequests:', helpRequests);
+    setHelpRequests((prev) => {
+      const next = prev.filter((r) => r.id !== id);
+      console.log('[DEBUG] ignoreHelpRequest prev:', prev, 'next:', next);
+      return next;
+    });
+    setActiveCall((prev) => (prev && prev.id === id ? null : prev));
+  }, [helpRequests]);
 
   const endCall = useCallback(() => {
+    console.log('[DEBUG] endCall called, activeCall:', activeCall, 'current helpRequests:', helpRequests);
     if (activeCall) {
       broadcastEndCall({ requestId: activeCall.id });
     }
     setActiveCall(null);
     setMyRequestAccepted(false);
     setAcceptedByVolunteer(null);
-  }, [activeCall, broadcastEndCall]);
+    setHelpRequests((prev) => {
+      const next = prev.filter((r) => r.id !== activeCall?.id);
+      console.log('[DEBUG] endCall cleared helpRequests, prev:', prev, 'next:', next);
+      return next;
+    });
+  }, [activeCall, broadcastEndCall, helpRequests]);
 
   return (
     <WebSocketContext.Provider
