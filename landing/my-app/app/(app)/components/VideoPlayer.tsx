@@ -18,12 +18,14 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
   const lastTime = useRef(0);
   const onDisconnectRef = useRef(onDisconnect);
   const intentionallyClosedRef = useRef(false);
+  const hasConnectedRef = useRef(false);
 
   // Keep ref in sync with latest prop without restarting the effect
   onDisconnectRef.current = onDisconnect;
 
   useEffect(() => {
     intentionallyClosedRef.current = false;
+    hasConnectedRef.current = false;
     const ws = new WebSocket(url);
     ws.binaryType = 'arraybuffer';
     wsRef.current = ws;
@@ -38,11 +40,12 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
       clearTimeout(timeout);
       setConnected(true);
       setUseSimulator(false);
+      hasConnectedRef.current = true;
     };
     ws.onclose = () => {
       setConnected(false);
       setUseSimulator(true);
-      if (!intentionallyClosedRef.current) {
+      if (!intentionallyClosedRef.current && hasConnectedRef.current) {
         onDisconnectRef.current?.();
       }
     };

@@ -126,7 +126,6 @@ export default function CanvasVideoSimulator({ onDisconnect }: Props) {
 
     return () => {
       cancelAnimationFrame(rafRef.current);
-      onDisconnect?.();
     };
   }, [onDisconnect]);
 
