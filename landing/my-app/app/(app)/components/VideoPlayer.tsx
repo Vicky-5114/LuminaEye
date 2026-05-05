@@ -16,8 +16,14 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
   const [fps, setFps] = useState(0);
   const frameCount = useRef(0);
   const lastTime = useRef(0);
+  const onDisconnectRef = useRef(onDisconnect);
+  const intentionallyClosedRef = useRef(false);
+
+  // Keep ref in sync with latest prop without restarting the effect
+  onDisconnectRef.current = onDisconnect;
 
   useEffect(() => {
+    intentionallyClosedRef.current = false;
     const ws = new WebSocket(url);
     ws.binaryType = 'arraybuffer';
     wsRef.current = ws;
@@ -36,7 +42,9 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
     ws.onclose = () => {
       setConnected(false);
       setUseSimulator(true);
-      onDisconnect?.();
+      if (!intentionallyClosedRef.current) {
+        onDisconnectRef.current?.();
+      }
     };
     ws.onerror = () => {
       setConnected(false);
@@ -61,9 +69,10 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
 
     return () => {
       clearTimeout(timeout);
+      intentionallyClosedRef.current = true;
       ws.close();
     };
-  }, [url, onDisconnect]);
+  }, [url]);
 
   if (useSimulator) {
     return <CanvasVideoSimulator onDisconnect={onDisconnect} />;
