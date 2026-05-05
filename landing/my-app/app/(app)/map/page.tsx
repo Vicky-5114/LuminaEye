@@ -103,17 +103,25 @@ export default function MapPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[var(--color-cyan)]">Assistance Map</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-text)]">Assistance Map</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode('map')}
-            className={`px-3 py-1 text-sm border ${viewMode === 'map' ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'}`}
+            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+              viewMode === "map"
+                ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/30"
+                : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]"
+            }`}
           >
             🗺 Map
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-3 py-1 text-sm border ${viewMode === 'list' ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'}`}
+            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+              viewMode === "list"
+                ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/30"
+                : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]"
+            }`}
           >
             📋 List
           </button>
@@ -125,8 +133,10 @@ export default function MapPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 text-sm border transition-colors ${
-              filter === f ? 'border-[var(--color-cyan)] text-[var(--color-cyan)]' : 'border-[var(--color-gray)]/30 text-[var(--color-gray)]'
+            className={`px-4 py-2 text-sm border transition-colors rounded-full ${
+              filter === f
+                ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/30"
+                : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]"
             }`}
           >
             {filterLabels[f]}
@@ -136,16 +146,16 @@ export default function MapPage() {
 
       {viewMode === 'map' ? (
         <div className="relative">
-          <div ref={mapRef} className="w-full h-[500px] bg-[var(--color-panel)] border border-[var(--color-gray)]/30" />
+          <div ref={mapRef} className="w-full h-[500px] rounded-xl border border-[var(--color-border)] overflow-hidden" />
 
           <div className="absolute bottom-4 left-4 flex gap-2">
-            <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-red-400">👁 {counts.blind}</span>
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm shadow-sm">
+              <span className="text-red-500">👁 {counts.blind}</span>
             </div>
-            <div className="bg-black/80 px-3 py-2 text-sm">
-              <span className="text-[var(--color-cyan)]">🙋 {counts.volunteer}</span>
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm shadow-sm">
+              <span className="text-[var(--color-accent)]">🙋 {counts.volunteer}</span>
             </div>
-            <div className="bg-black/80 px-3 py-2 text-sm">
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm shadow-sm">
               <span className="text-yellow-400">🏪 {counts.business}</span>
             </div>
           </div>
@@ -156,7 +166,7 @@ export default function MapPage() {
             <div
               key={loc.id}
               onClick={() => setSelectedLocation(loc)}
-              className="bg-[var(--color-panel)] border border-[var(--color-gray)]/30 p-4 cursor-pointer hover:border-[var(--color-cyan)]/50"
+              className="bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] p-4 cursor-pointer hover:bg-[var(--color-bg)] transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -164,9 +174,9 @@ export default function MapPage() {
                     {loc.type === 'blind' ? '👁' : loc.type === 'volunteer' ? '🙋' : '🏪'} {loc.name}
                   </span>
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
-                    loc.type === 'blind' ? 'bg-red-400/20 text-red-400' :
-                    loc.type === 'volunteer' ? 'bg-[var(--color-cyan)]/20 text-[var(--color-cyan)]' :
-                    'bg-yellow-400/20 text-yellow-400'
+                    loc.type === 'blind' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                    loc.type === 'volunteer' ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400' :
+                    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                   }`}>
                     {loc.status || 'Open'}
                   </span>
@@ -180,13 +190,8 @@ export default function MapPage() {
 
       {selectedLocation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[var(--color-panel)] border border-[var(--color-cyan)]/50 p-6 w-full max-w-md relative">
-            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[var(--color-cyan)]" />
-            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[var(--color-cyan)]" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[var(--color-cyan)]" />
-            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[var(--color-cyan)]" />
-
-            <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-gray)] hover:text-white">✕</button>
+          <div className="bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] shadow-xl w-full max-w-md p-6 relative transition-colors">
+            <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]">✕</button>
 
             <h3 className="text-xl font-bold mb-2">{selectedLocation.name}</h3>
             <p className="text-sm text-[var(--color-gray)] mb-4">{selectedLocation.description}</p>
@@ -195,9 +200,9 @@ export default function MapPage() {
             {selectedLocation.jobs && <p className="text-sm mb-4">💼 Jobs: {selectedLocation.jobs.join(', ')}</p>}
 
             <div className="flex gap-2">
-              <button className="flex-1 py-2 bg-[var(--color-cyan)] text-black font-bold text-sm">Navigate</button>
+              <button className="flex-1 py-2 bg-[var(--color-accent)] text-white font-medium rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors">Navigate</button>
               {selectedLocation.type === 'blind' && (
-                <a href="/video" className="flex-1 py-2 bg-green-600 text-white font-bold text-sm text-center">Video Assist</a>
+                <a href="/video" className="flex-1 py-2 bg-[var(--color-success)] text-white font-medium rounded-lg text-center hover:opacity-90 transition-opacity">Video Assist</a>
               )}
             </div>
           </div>
