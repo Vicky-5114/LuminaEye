@@ -66,8 +66,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         setHelpRequests((prev) => prev.filter((r) => r.id !== payload.requestId));
         setActiveCall((prev) => {
           if (prev && prev.id === payload.requestId) return prev;
-          const found = helpRequests.find((r) => r.id === payload.requestId);
-          return found || prev;
+          return prev;
         });
         setMyRequestAccepted(true);
         setAcceptedByVolunteer(payload.volunteerName);
@@ -81,7 +80,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         setAcceptedByVolunteer(null);
       });
     }
-  }, [demoMessage, helpRequests]);
+  }, [demoMessage]);
 
   // Mock mode: simulate help requests when backend is not running
   useEffect(() => {
@@ -114,29 +113,19 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [helpRequests, broadcastAccept]);
 
   const ignoreHelpRequest = useCallback((id: string) => {
-    console.log('[DEBUG] ignoreHelpRequest called, id:', id, 'current helpRequests:', helpRequests);
-    setHelpRequests((prev) => {
-      const next = prev.filter((r) => r.id !== id);
-      console.log('[DEBUG] ignoreHelpRequest prev:', prev, 'next:', next);
-      return next;
-    });
+    setHelpRequests((prev) => prev.filter((r) => r.id !== id));
     setActiveCall((prev) => (prev && prev.id === id ? null : prev));
-  }, [helpRequests]);
+  }, []);
 
   const endCall = useCallback(() => {
-    console.log('[DEBUG] endCall called, activeCall:', activeCall, 'current helpRequests:', helpRequests);
     if (activeCall) {
       broadcastEndCall({ requestId: activeCall.id });
     }
     setActiveCall(null);
     setMyRequestAccepted(false);
     setAcceptedByVolunteer(null);
-    setHelpRequests((prev) => {
-      const next = prev.filter((r) => r.id !== activeCall?.id);
-      console.log('[DEBUG] endCall cleared helpRequests, prev:', prev, 'next:', next);
-      return next;
-    });
-  }, [activeCall, broadcastEndCall, helpRequests]);
+    setHelpRequests((prev) => prev.filter((r) => r.id !== activeCall?.id));
+  }, [activeCall, broadcastEndCall]);
 
   return (
     <WebSocketContext.Provider
