@@ -21,36 +21,32 @@ This is an AI-powered smart glasses navigation system for the visually impaired 
 The system follows a layered architecture with FastAPI as the web server:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Client Layer (ESP32-CAM, Browser, Mobile)                  │
-└─────────────────────────────────────────────────────────────┘
-                              ↕ WebSocket/HTTP
-┌─────────────────────────────────────────────────────────────┐
-│  FastAPI Service (app_main.py)                              │
-│  - WebSocket endpoints: /ws/camera, /ws/viewer, /ws_audio   │
-│  - HTTP endpoints: /stream.wav, /api/*                      │
-└─────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────┐
-│  NavigationMaster (navigation_master.py) - State Machine    │
-│  States: IDLE, CHAT, BLINDPATH_NAV, CROSSING,               │
-│          TRAFFIC_LIGHT_DETECTION, ITEM_SEARCH               │
-└─────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────┐
-│  Workflow Modules                                           │
-│  - workflow_blindpath.py: Blind path navigation             │
-│  - workflow_crossstreet.py: Crosswalk/zebra crossing        │
-│  - yolomedia.py: Item search with hand tracking             │
-└─────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────┐
-│  AI Services                                                │
-│  - YOLO models (segmentation, detection)                    │
-│  - MediaPipe (hand tracking)                                │
-│  - DashScope API (ASR: Paraformer, Chat: Qwen-Omni)        │
-└─────────────────────────────────────────────────────────────┘
+Client Layer (ESP32-CAM, Browser, Mobile)
+              ↕ WebSocket/HTTP
+FastAPI Service (app_main.py)
+  - WebSocket endpoints: /ws/camera, /ws/viewer, /ws_audio
+  - HTTP endpoints: /stream.wav, /api/*
+              ↕
+NavigationMaster (navigation_master.py) - State Machine
+              ↕
+Workflow Modules (workflow_blindpath.py, workflow_crossstreet.py, yolomedia.py)
+              ↕
+AI Services (YOLO, MediaPipe, DashScope API)
 ```
+
+### State Machine
+
+`navigation_master.py` manages these states:
+- `IDLE` - Waiting for commands
+- `CHAT` - AI conversation mode (no navigation)
+- `BLINDPATH_NAV` - Blind path navigation active
+- `SEEKING_CROSSWALK` - Blind path stage: detected crosswalk, aligning/approaching
+- `WAIT_TRAFFIC_LIGHT` - At crosswalk, waiting for traffic light (optional/placeholder)
+- `CROSSING` - Crossing the street (uses CrossStreetNavigator)
+- `SEEKING_NEXT_BLINDPATH` - After crossing, seeking next blind path entrance
+- `RECOVERY` - Fallback/recovery when perception is temporarily lost
+- `TRAFFIC_LIGHT_DETECTION` - Traffic light detection mode
+- `ITEM_SEARCH` - Item search mode (pauses navigation, handled by yolomedia)
 
 ### Workflow State Machines
 
@@ -88,6 +84,8 @@ npm run build   # Static export to dist/
 npm run lint    # ESLint
 ```
 
+The landing page also has an `AGENTS.md` with Next.js-specific rules about reading `node_modules/next/dist/docs/` before writing code due to breaking changes in this version.
+
 ## Common Commands
 
 ### Setup
@@ -99,6 +97,8 @@ chmod +x setup.sh && ./setup.sh
 # Windows
 setup.bat
 ```
+
+Both scripts create a virtual environment, install PyTorch (CUDA if available), install requirements, and check for model files.
 
 ### Development
 
@@ -118,18 +118,18 @@ DASHSCOPE_API_KEY=sk-xxxxx python app_main.py
 
 ### Debugging/Testing
 
-No formal test suite exists. Module-specific test files referenced in README (e.g., `test_traffic_light.py`) are not currently in the repo. Use the following for ad-hoc debugging:
+No formal test suite exists. The README references test files (e.g., `test_traffic_light.py`) that are not currently in the repo. Use the following for ad-hoc debugging:
 
 ```bash
-# Enable debug logging in app_main.py
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
 # Test trafficlight_detection standalone
 python -c "import trafficlight_detection; trafficlight_detection.init_model()"
 
 # Test crosswalk awareness module
 python crosswalk_awareness.py
+
+# Enable debug logging in app_main.py
+import logging
+logging.basicConfig(level=logging.DEBUG)
 ```
 
 ### Docker
@@ -162,7 +162,9 @@ docker-compose up -d
 | `qwen_extractor.py` | Chinese-to-English item name extraction |
 | `audio_stream.py` | WebSocket audio streaming for `/stream.wav` |
 | `audio_compressor.py` | Audio compression utilities |
-| `crosswalk_awareness.py` | Standalone crosswalk detection test |
+| `crosswalk_awareness.py` | Standalone crosswalk detection test/utility |
+| `utils.py` | Shared CV utilities: optical flow, risk scoring, obstacle name mapping |
+| `models.py` | Model loading abstraction (appears to be refactor-in-progress; references `app/cloud/` paths that don't exist in current structure) |
 | `compile/` | ESP32 Arduino firmware |
 | `model/` | AI model files (downloaded separately) |
 | `static/` | Web UI assets (JS, CSS) for backend monitoring UI |
@@ -180,6 +182,8 @@ Place these in `model/` directory (download from ModelScope):
 - `hand_landmarker.task` - MediaPipe hand model (included)
 
 Model download URL: https://www.modelscope.cn/models/archifancy/AIGlasses_for_navigation
+
+**Note**: `yoloe_backend.py` has a hardcoded Windows path in `DEFAULT_MODEL_PATH`. It falls back to the `YOLOE_MODEL_PATH` env var.
 
 ## WebSocket Endpoints
 
@@ -209,7 +213,7 @@ Traffic light:
 Item search:
 - "帮我找一下 [物品]" → Search for item (e.g., "帮我找一下红牛")
   - Extracts item name using regex pattern `(?:^\s*帮我)?\s*找一下\s*(.+?)(?:。|！|？|$)`
-  - Maps Chinese to English via `qwen_extractor.py` or local mapping
+  - Maps Chinese to English via `qwen_extractor.py` or local mapping in `utils.py`
   - Pauses navigation, enters ITEM_SEARCH state
 - "找到了" / "拿到了" → Confirm item found (resumes previous navigation if any)
 
@@ -217,6 +221,14 @@ AI conversation:
 - Any non-command text → Multimodal chat with Qwen-Omni (image + text input, voice output)
 - During conversation, system is in CHAT mode (navigation paused)
 - Voice output is resampled from 24kHz to 8kHz for ESP32 compatibility
+
+### Navigation Mode Filtering
+
+When in navigation or traffic light detection mode (not CHAT/IDLE), only specific keywords trigger AI conversation. All other voice input is discarded:
+
+Allowed query keywords: `["帮我看", "帮我看下", "帮我找", "找一下", "看看", "识别一下"]`
+
+Navigation control keywords bypass this filter.
 
 ## Environment Variables
 
@@ -238,15 +250,7 @@ AIGLASS_OBS_INTERVAL=15         # Obstacle detection interval (frames)
 AIGLASS_CROSSWALK_INTERVAL=4    # Crosswalk detection interval (frames)
 ```
 
-## State Machine States
-
-The `NavigationMaster` manages these states:
-- `IDLE` - Waiting for commands
-- `CHAT` - AI conversation mode (no navigation)
-- `BLINDPATH_NAV` - Blind path navigation active
-- `CROSSING` - Crossing the street
-- `TRAFFIC_LIGHT_DETECTION` - Monitoring traffic lights
-- `ITEM_SEARCH` - Searching for specific items
+**Note**: `.env.example` is referenced in setup scripts but does not exist in the repo. Create `.env` manually.
 
 ## Frame Processing Pipeline
 
@@ -280,7 +284,7 @@ State changes include a cooldown period (`COOLDOWN_SEC = 0.6`) to prevent jitter
 self.cooldown_until = time.time() + self.COOLDOWN_SEC
 ```
 
-Mode switching behavior (`app_main.py:500-600`):
+Mode switching behavior (`app_main.py`):
 1. Starting navigation → stops item search if running
 2. Starting item search → saves current nav state, pauses navigation
 3. Item found → restores previous nav state (if any)
@@ -298,11 +302,20 @@ Blind path navigation uses Lucas-Kanade optical flow (`cv2.calcOpticalFlowPyrLK`
 - Configured in `workflow_blindpath.py:FEATURE_PARAMS`
 - Reduces mask jitter caused by camera shake
 
+### Item Name Mapping
+
+`utils.py` contains `ITEM_TO_CLASS_MAP` for local Chinese-to-English item name resolution:
+```python
+{"红牛": "Red_Bull", "AD钙奶": "AD_milk", ...}
+```
+
+If no local mapping exists, `qwen_extractor.py` calls Qwen-Turbo API to translate. This is used by `yolomedia.py` to set YOLO-E text classes.
+
 ## Extending the System
 
 ### Adding a New Voice Command
 
-Edit `app_main.py:start_ai_with_text_custom()` (around line 410). Add your check before the generic AI conversation fallback:
+Edit `app_main.py:start_ai_with_text_custom()`. Add your check before the generic AI conversation fallback:
 
 ```python
 if "新指令关键词" in user_text:
@@ -311,7 +324,7 @@ if "新指令关键词" in user_text:
     return
 ```
 
-If the command should be allowed during navigation mode, also add it to `allowed_keywords` (around line 420).
+If the command should be allowed during navigation mode, also add it to `allowed_keywords`.
 
 ### Adding a New Navigation State
 
@@ -327,3 +340,4 @@ If the command should be allowed during navigation mode, also add it to `allowed
 - The system uses threading extensively; use `bridge_io` for thread-safe frame passing
 - Model files are NOT in the repo; must download separately from ModelScope
 - ESP32 firmware is in `compile/compile.ino`
+- `models.py` appears to be a newer/refactored model loading abstraction that may not be fully wired into the current `app_main.py` entry point
