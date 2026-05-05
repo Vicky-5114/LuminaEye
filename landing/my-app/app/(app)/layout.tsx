@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter, usePathname } from 'next/navigation';
 import { RoleProvider, useRole } from './context/RoleContext';
 import { WebSocketProvider, useWebSocketContext } from './context/WebSocketContext';
 import { DemoChannelProvider } from './context/DemoChannelContext';
@@ -8,14 +9,16 @@ import HelpNotification from './components/HelpNotification';
 
 function LayoutInner({ children }: { children: React.ReactNode }) {
   const { role, user } = useRole();
+  const router = useRouter();
+  const pathname = usePathname();
   const { connected, helpRequests, activeCall, acceptHelpRequest, ignoreHelpRequest } = useWebSocketContext();
 
   const handleAccept = () => {
     const next = helpRequests[0];
     if (next) {
       acceptHelpRequest(next.id);
-      if (!activeCall) {
-        window.location.href = '/video';
+      if (pathname !== '/video') {
+        router.push('/video');
       }
     }
   };
