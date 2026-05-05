@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useDemoChannel } from './DemoChannelContext';
 
@@ -105,26 +105,26 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [connected]);
 
-  const acceptHelpRequest = (id: string) => {
+  const acceptHelpRequest = useCallback((id: string) => {
     const request = helpRequests.find((r) => r.id === id);
     if (!request) return;
     setHelpRequests((prev) => prev.filter((r) => r.id !== id));
     setActiveCall(request);
     broadcastAccept({ requestId: id, volunteerName: 'Volunteer' });
-  };
+  }, [helpRequests, broadcastAccept]);
 
-  const ignoreHelpRequest = (id: string) => {
+  const ignoreHelpRequest = useCallback((id: string) => {
     setHelpRequests((prev) => prev.filter((r) => r.id !== id));
-  };
+  }, []);
 
-  const endCall = () => {
+  const endCall = useCallback(() => {
     if (activeCall) {
       broadcastEndCall({ requestId: activeCall.id });
     }
     setActiveCall(null);
     setMyRequestAccepted(false);
     setAcceptedByVolunteer(null);
-  };
+  }, [activeCall, broadcastEndCall]);
 
   return (
     <WebSocketContext.Provider
