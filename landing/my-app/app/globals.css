@@ -16,18 +16,18 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
-  --color-bg: #1e293b;
-  --color-card: #334155;
-  --color-input: #475569;
-  --color-border: #475569;
-  --color-text: #e2e8f0;
-  --color-text-secondary: #94a3b8;
-  --color-accent: #38bdf8;
-  --color-accent-hover: #0ea5e9;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-  --color-danger-hover: #ef4444;
+  --color-bg: #0a0a0f;
+  --color-card: #111118;
+  --color-input: #1a1a24;
+  --color-border: rgba(0, 240, 255, 0.15);
+  --color-text: #ffffff;
+  --color-text-secondary: #8a8a9a;
+  --color-accent: #00f0ff;
+  --color-accent-hover: #33f3ff;
+  --color-success: #00ff88;
+  --color-warning: #ffdd00;
+  --color-danger: #ff00a0;
+  --color-danger-hover: #ff33b3;
 }
 
 @theme inline {

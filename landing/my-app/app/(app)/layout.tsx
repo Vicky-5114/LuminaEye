@@ -39,7 +39,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       <Navbar />
 
       {/* Quick status bar */}
-      <div className="bg-[var(--color-card)] border-b border-[var(--color-border)] px-4 py-2 text-sm transition-colors duration-300">
+      <div className="bg-[var(--color-card)] border-b border-[var(--color-border)] px-4 py-2 text-sm transition-colors duration-300 dark:bg-[#0a0a0f]/60 dark:backdrop-blur">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {role === 'blind' ? (
             <span className={connected ? 'text-[var(--color-success)]' : 'text-[var(--color-text-secondary)]'}>
@@ -67,7 +67,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       {role === 'blind' && (
         <a
           href="/video"
-          className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-red-500/30 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-4 focus:ring-red-400/50 transition-all duration-200"
+          className="fixed bottom-6 right-6 z-40 w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-red-500/30 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-4 focus:ring-red-400/50 transition-all duration-200 dark:shadow-[0_0_20px_rgba(255,0,160,0.4)] dark:hover:shadow-[0_0_30px_rgba(255,0,160,0.6)]"
           aria-label="Emergency Help"
         >
           🆘
