@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRole } from '../context/RoleContext';
 import { useWebSocketContext } from '../context/WebSocketContext';
 import { useDemoChannel } from '../context/DemoChannelContext';
@@ -21,6 +21,9 @@ export default function VideoPage() {
 
 function BlindVideoView() {
   const [status, setStatus] = useState<VideoStatus>('idle');
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
   const { broadcastHelpRequest } = useDemoChannel();
   const { myRequestAccepted, acceptedByVolunteer } = useWebSocketContext();
   const { success, info } = useToast();
@@ -43,6 +46,64 @@ function BlindVideoView() {
 
   const displayStatus = myRequestAccepted ? 'connected' : status;
 
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => {
+      setIsListening(false);
+      // Auto-restart if still idle and supported
+      if (displayStatus === 'idle' && recognitionRef.current) {
+        try { recognitionRef.current.start(); } catch {}
+      }
+    };
+
+    recognition.onresult = (event: any) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript.toLowerCase().trim();
+        if (transcript.includes('help me')) {
+          if (displayStatus === 'idle') {
+            handleRequest();
+          }
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === 'not-allowed') {
+        setIsListening(false);
+      }
+    };
+
+    if (displayStatus === 'idle') {
+      try { recognition.start(); } catch {}
+    }
+
+    return () => {
+      recognitionRef.current = null;
+      try { recognition.stop(); } catch {}
+    };
+  }, [displayStatus]);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      try { recognitionRef.current.stop(); } catch {}
+    } else {
+      try { recognitionRef.current.start(); } catch {}
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-[var(--color-text)]">Video Help</h1>
@@ -51,12 +112,36 @@ function BlindVideoView() {
         <VideoPlayer url="ws://localhost:8081/ws/viewer" />
       </div>
 
-      <div className="bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] p-4 transition-colors">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xl">🎙</span>
-          <span className="text-[var(--color-text)]">Voice command ready</span>
+      <div className={`bg-[var(--color-card)] rounded-xl border p-4 transition-colors ${isListening ? 'border-[var(--color-success)] shadow-[0_0_12px_rgba(0,255,136,0.15)]' : 'border-[var(--color-border)]'}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className={`text-2xl ${isListening ? 'animate-pulse' : ''}`}>🎙</span>
+            <div>
+              <div className="text-[var(--color-text)] font-medium">
+                {speechSupported
+                  ? isListening ? 'Listening...' : 'Voice command ready'
+                  : 'Voice commands not supported'}
+              </div>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {speechSupported
+                  ? 'Say "help me" to request assistance automatically'
+                  : 'Please use the manual button below'}
+              </p>
+            </div>
+          </div>
+          {speechSupported && (
+            <button
+              onClick={toggleListening}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                isListening
+                  ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30'
+                  : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+              }`}
+            >
+              {isListening ? 'Stop' : 'Start'}
+            </button>
+          )}
         </div>
-        <p className="text-sm text-[var(--color-text-secondary)]">Say &quot;help me&quot; to your glasses to request assistance</p>
       </div>
 
       <div className="text-center">
