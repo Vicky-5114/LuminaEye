@@ -10,7 +10,7 @@ export default function PostCard({ post }: Props) {
   return (
     <a
       href={`/forum/post?id=${post.id}`}
-      className="block bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+      className="block bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 dark:hover:border-cyan-500/30 dark:hover:shadow-[0_0_12px_rgba(0,240,255,0.1)]"
     >
       <div className="flex items-center gap-2 mb-3">
         <div

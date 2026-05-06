@@ -5,10 +5,12 @@ import { MOCK_POSTS, ALL_CATEGORIES } from './mock-data';
 import { PostCategory } from './types';
 import PostCard from '../components/PostCard';
 import { useRole } from '../context/RoleContext';
+import { useToast } from '../context/ToastContext';
 
 export default function ForumPage() {
   const [activeCategory, setActiveCategory] = useState<PostCategory>('All');
   const [showModal, setShowModal] = useState(false);
+  const { success } = useToast();
 
   const filteredPosts = useMemo(() => {
     if (activeCategory === 'All') return MOCK_POSTS;
@@ -21,7 +23,7 @@ export default function ForumPage() {
         <h1 className="text-2xl font-bold text-[var(--color-text)]">Lumina Community</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-[var(--color-accent)] text-white font-medium rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors flex items-center gap-1"
+          className="px-4 py-2 bg-[var(--color-accent)] text-white font-medium rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors flex items-center gap-1 dark:hover:shadow-[0_0_12px_rgba(0,240,255,0.3)]"
         >
           + New Post
         </button>
@@ -49,6 +51,19 @@ export default function ForumPage() {
         ))}
       </div>
 
+      {filteredPosts.length === 0 && (
+        <div className="text-center py-16">
+          <div className="text-5xl mb-4">📝</div>
+          <p className="text-[var(--color-text-secondary)] mb-4">No posts yet. Be the first to share!</p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors"
+          >
+            New Post
+          </button>
+        </div>
+      )}
+
       {showModal && <PostModal onClose={() => setShowModal(false)} />}
     </div>
   );
@@ -56,6 +71,7 @@ export default function ForumPage() {
 
 function PostModal({ onClose }: { onClose: () => void }) {
   const { user } = useRole();
+  const { success } = useToast();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<PostCategory>('Q&A');
   const [content, setContent] = useState('');
@@ -82,6 +98,7 @@ function PostModal({ onClose }: { onClose: () => void }) {
     existing.unshift(newPost);
     localStorage.setItem('lumina_posts', JSON.stringify(existing));
 
+    success('Post published successfully');
     window.location.reload();
   };
 

@@ -4,11 +4,13 @@ import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { MOCK_POSTS } from '../mock-data';
 import { useRole } from '../../context/RoleContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function PostContent() {
   const searchParams = useSearchParams();
   const postId = searchParams.get('id');
   const { user } = useRole();
+  const { success } = useToast();
   const [commentText, setCommentText] = useState('');
 
   const localPosts = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('lumina_posts') || '[]' : '[]');
@@ -42,6 +44,7 @@ export default function PostContent() {
       createdAt: new Date().toLocaleString('en-US'),
     });
     localStorage.setItem('lumina_comments', JSON.stringify(comments));
+    success('Comment added');
     window.location.reload();
   };
 
@@ -52,7 +55,7 @@ export default function PostContent() {
     <div className="max-w-3xl mx-auto space-y-6">
       <a href="/forum" className="text-sm text-[var(--color-accent)] hover:underline">← Back to Forum</a>
 
-      <article className={`bg-[var(--color-card)] border-l-4 p-6 ${isBlind ? 'border-l-[var(--color-success)]' : 'border-l-[var(--color-accent)]'}`}>
+      <article className={`bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl border-l-4 p-6 transition-colors dark:hover:border-cyan-500/20 ${isBlind ? 'border-l-[var(--color-success)]' : 'border-l-[var(--color-accent)]'}`}>
         <div className="flex items-center gap-2 mb-4">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${isBlind ? 'bg-[var(--color-success)]/20 text-[var(--color-success)]' : 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'}`}>
             {post.author.name[0]}

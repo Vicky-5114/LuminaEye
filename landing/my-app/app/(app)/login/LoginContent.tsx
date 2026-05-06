@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRole, UserRole } from "../context/RoleContext";
+import { useToast } from "../context/ToastContext";
 
 const MOCK_VOLUNTEERS: Record<string, { password: string; name: string }> = {
   "volunteer1@example.com": { password: "123456", name: "Volunteer Lee" },
@@ -17,7 +18,7 @@ export default function LoginContent() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] shadow-sm p-8 transition-colors duration-300">
+      <div className="w-full max-w-md bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] shadow-sm p-8 transition-colors duration-300 dark:shadow-[0_0_20px_rgba(0,240,255,0.08)]">
         <h1 className="text-2xl font-bold text-center mb-8 text-[var(--color-text)]">
           LuminaEye
         </h1>
@@ -55,6 +56,7 @@ function BlindForm({ login }: { login: (user: { id: string; name: string; role: 
   const [glassesId, setGlassesId] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const { success } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +64,7 @@ function BlindForm({ login }: { login: (user: { id: string; name: string; role: 
     if (!glassesId.trim()) { setError("Please enter glasses ID"); return; }
     if (!/^GL-\d{4}-\d{3}$/.test(glassesId)) { setError("Invalid glasses ID format (e.g., GL-2025-001)"); return; }
     if (!name.trim()) { setError("Please enter your name"); return; }
+    success(`Welcome, ${name.trim()}!`);
     login({ id: glassesId, name: name.trim(), role: "blind", glassesId: glassesId.trim() });
     window.location.href = "/forum";
   };
@@ -75,7 +78,7 @@ function BlindForm({ login }: { login: (user: { id: string; name: string; role: 
           value={glassesId}
           onChange={(e) => setGlassesId(e.target.value)}
           placeholder="e.g., GL-2025-001"
-          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 transition-colors"
+          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 dark:focus:shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-colors"
         />
       </div>
       <div>
@@ -85,7 +88,7 @@ function BlindForm({ login }: { login: (user: { id: string; name: string; role: 
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 transition-colors"
+          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 dark:focus:shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-colors"
         />
       </div>
       {error && <p className="text-[var(--color-danger)] text-sm">{error}</p>}
@@ -105,6 +108,7 @@ function VolunteerForm({ login }: { login: (user: { id: string; name: string; ro
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const { success } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,11 +119,13 @@ function VolunteerForm({ login }: { login: (user: { id: string; name: string; ro
       const found = MOCK_VOLUNTEERS[email];
       if (!found) { setError("Email not registered"); return; }
       if (found.password !== password) { setError("Incorrect password"); return; }
+      success(`Welcome back, ${found.name}!`);
       login({ id: email, name: found.name, role: "volunteer", email });
     } else {
       if (!name.trim()) { setError("Please enter your name"); return; }
       if (MOCK_VOLUNTEERS[email]) { setError("Email already registered, please log in"); return; }
       MOCK_VOLUNTEERS[email] = { password, name: name.trim() };
+      success(`Welcome, ${name.trim()}!`);
       login({ id: email, name: name.trim(), role: "volunteer", email });
     }
     window.location.href = "/forum";
@@ -134,7 +140,7 @@ function VolunteerForm({ login }: { login: (user: { id: string; name: string; ro
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 transition-colors"
+          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 dark:focus:shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-colors"
         />
       </div>
       <div>
@@ -144,7 +150,7 @@ function VolunteerForm({ login }: { login: (user: { id: string; name: string; ro
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 6 characters"
-          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 transition-colors"
+          className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 dark:focus:shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-colors"
         />
       </div>
       {!isLogin && (
@@ -155,7 +161,7 @@ function VolunteerForm({ login }: { login: (user: { id: string; name: string; ro
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 transition-colors"
+            className="w-full bg-[var(--color-input)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-secondary)]/50 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 dark:focus:shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-colors"
           />
         </div>
       )}
