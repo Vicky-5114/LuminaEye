@@ -6,6 +6,44 @@ import { MOCK_POSTS } from '../mock-data';
 import { useRole } from '../../context/RoleContext';
 import { useToast } from '../../context/ToastContext';
 
+function VoiceInputButton({ onTranscript, label }: { onTranscript: (text: string) => void; label: string }) {
+  const [listening, setListening] = useState(false);
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      onTranscript(transcript);
+    };
+
+    try { recognition.start(); } catch {}
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={startListening}
+      className={`px-2 py-1 text-xs font-medium rounded-lg border transition-colors ${
+        listening
+          ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/30 animate-pulse'
+          : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+      }`}
+      aria-label={`Voice input for ${label}`}
+    >
+      {listening ? '🎙 Listening...' : '🎙 Voice'}
+    </button>
+  );
+}
+
 export default function PostContent() {
   const searchParams = useSearchParams();
   const postId = searchParams.get('id');
@@ -126,6 +164,10 @@ export default function PostContent() {
 
       {user && (
         <form onSubmit={handleComment} className="space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm text-[var(--color-text-secondary)]">Write your comment...</span>
+            <VoiceInputButton label="comment" onTranscript={(text) => setCommentText(text)} />
+          </div>
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
