@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRole } from '../context/RoleContext';
 import { useWebSocketContext } from '../context/WebSocketContext';
 import { useDemoChannel } from '../context/DemoChannelContext';
+import { useToast } from '../context/ToastContext';
 import VideoPlayer from '../components/VideoPlayer';
 
 type VideoStatus = 'idle' | 'requesting' | 'connected' | 'ended';
@@ -22,6 +23,7 @@ function BlindVideoView() {
   const [status, setStatus] = useState<VideoStatus>('idle');
   const { broadcastHelpRequest } = useDemoChannel();
   const { myRequestAccepted, acceptedByVolunteer } = useWebSocketContext();
+  const { success, info } = useToast();
 
   const handleRequest = () => {
     setStatus('requesting');
@@ -33,6 +35,7 @@ function BlindVideoView() {
       glassesId: user.id,
       timestamp: Date.now(),
     });
+    info('Help request sent');
     setTimeout(() => setStatus('connected'), 3000);
   };
 
@@ -97,6 +100,7 @@ function BlindVideoView() {
 
 function VolunteerVideoView() {
   const { helpRequests, activeCall, acceptHelpRequest, ignoreHelpRequest, endCall } = useWebSocketContext();
+  const { success } = useToast();
   const [showGenerator, setShowGenerator] = useState(false);
 
   if (activeCall) {
@@ -159,8 +163,8 @@ function VolunteerVideoView() {
 
       {helpRequests.length === 0 ? (
         <div className="text-center py-20 bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] transition-colors">
-          <div className="text-6xl mb-4">📹</div>
-          <p className="text-[var(--color-text-secondary)]">No video assistance tasks</p>
+          <div className="text-6xl mb-4 animate-pulse">📹</div>
+          <p className="text-[var(--color-text-secondary)]">Waiting for help requests...</p>
           <p className="text-sm text-[var(--color-text-secondary)] mt-2">Help requests from blind users will appear here</p>
         </div>
       ) : (
@@ -186,7 +190,7 @@ function VolunteerVideoView() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => acceptHelpRequest(req.id)}
+                  onClick={() => { acceptHelpRequest(req.id); success(`Connected with ${req.userName}`); }}
                   className="px-4 py-2 bg-[var(--color-success)] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
                 >
                   Accept

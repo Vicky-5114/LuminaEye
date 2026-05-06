@@ -12,7 +12,7 @@ export default function HelpNotification({ request, onAccept, onIgnore }: Props)
   if (!request) return null;
 
   return (
-    <div role="alert" aria-live="assertive" className="fixed bottom-6 right-6 z-50 w-80 bg-[var(--color-card)] rounded-xl shadow-xl border-t-4 border-[var(--color-danger)] p-4 transition-colors">
+    <div role="alert" aria-live="assertive" className="fixed bottom-6 right-6 z-50 w-80 bg-[var(--color-card)] rounded-xl shadow-xl border-t-4 border-[var(--color-danger)] p-4 transition-colors dark:bg-[#111118]/90 dark:backdrop-blur dark:border-t-4 dark:border-[#ff00a0] dark:shadow-[0_0_20px_rgba(255,0,160,0.2)]">
       <div className="flex items-start gap-3">
         <div className="text-2xl" aria-hidden="true">🆘</div>
         <div className="flex-1 min-w-0">

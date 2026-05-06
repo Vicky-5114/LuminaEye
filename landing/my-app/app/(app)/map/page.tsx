@@ -146,7 +146,7 @@ export default function MapPage() {
 
       {viewMode === 'map' ? (
         <div className="relative">
-          <div ref={mapRef} className="w-full h-[500px] rounded-xl border border-[var(--color-border)] overflow-hidden" />
+          <div ref={mapRef} className="w-full h-[500px] rounded-xl border border-[var(--color-border)] overflow-hidden dark:border-cyan-500/20 dark:shadow-[0_0_20px_rgba(0,240,255,0.05)]" />
 
           <div className="absolute bottom-4 left-4 flex gap-2">
             <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm shadow-sm">
@@ -162,6 +162,12 @@ export default function MapPage() {
         </div>
       ) : (
         <div className="space-y-2">
+          {filteredLocations.length === 0 && (
+            <div className="text-center py-16 bg-[var(--color-card)] rounded-xl border border-[var(--color-border)]">
+              <div className="text-5xl mb-4">🗺</div>
+              <p className="text-[var(--color-text-secondary)]">No locations match your filter</p>
+            </div>
+          )}
           {filteredLocations.map((loc) => (
             <div
               key={loc.id}
@@ -190,7 +196,7 @@ export default function MapPage() {
 
       {selectedLocation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] shadow-xl w-full max-w-md p-6 relative transition-colors">
+          <div className="bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] shadow-xl w-full max-w-md p-6 relative transition-colors dark:border-cyan-500/20">
             <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]">✕</button>
 
             <h3 className="text-xl font-bold mb-2">{selectedLocation.name}</h3>
