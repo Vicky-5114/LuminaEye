@@ -25,6 +25,7 @@ function BlindVideoView() {
   const [speechSupported, setSpeechSupported] = useState(true);
   const [needsInteraction, setNeedsInteraction] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const restartTimeoutRef = useRef<any>(null);
   const { broadcastHelpRequest } = useDemoChannel();
   const { myRequestAccepted, acceptedByVolunteer } = useWebSocketContext();
   const { success, info } = useToast();
@@ -66,9 +67,11 @@ function BlindVideoView() {
     };
     recognition.onend = () => {
       setIsListening(false);
-      // Auto-restart if still idle
+      // Delayed restart to avoid rapid start/stop flicker
       if (displayStatus === 'idle' && recognitionRef.current) {
-        try { recognitionRef.current.start(); } catch {}
+        restartTimeoutRef.current = setTimeout(() => {
+          try { recognitionRef.current?.start(); } catch {}
+        }, 400);
       }
     };
 
@@ -88,6 +91,7 @@ function BlindVideoView() {
         setIsListening(false);
         setNeedsInteraction(true);
       }
+      // no-speech and aborted are normal; let onend handle restart
     };
 
     const tryStart = () => {
@@ -117,6 +121,7 @@ function BlindVideoView() {
       document.removeEventListener('click', startOnInteraction);
       document.removeEventListener('keydown', startOnInteraction);
       document.removeEventListener('touchstart', startOnInteraction);
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
       recognitionRef.current = null;
       try { recognition.stop(); } catch {}
     };

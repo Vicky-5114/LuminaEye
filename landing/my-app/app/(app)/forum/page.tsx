@@ -15,7 +15,11 @@ export default function ForumPage() {
   const [needsInteraction, setNeedsInteraction] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
   const recognitionRef = useRef<any>(null);
+  const restartTimeoutRef = useRef<any>(null);
+  const { role } = useRole();
   const { success } = useToast();
+
+  const isBlind = role === 'blind';
 
   const bookmarkedIds = useMemo(() => {
     if (typeof window === 'undefined') return [] as string[];
@@ -33,6 +37,8 @@ export default function ForumPage() {
   }, [activeCategory, showBookmarked, bookmarkedIds]);
 
   useEffect(() => {
+    if (!isBlind) return;
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setSpeechSupported(false);
@@ -49,10 +55,14 @@ export default function ForumPage() {
       setIsListening(true);
       setNeedsInteraction(false);
     };
+
     recognition.onend = () => {
       setIsListening(false);
+      // Delayed restart to avoid rapid start/stop flicker
       if (!showModal && recognitionRef.current) {
-        try { recognitionRef.current.start(); } catch {}
+        restartTimeoutRef.current = setTimeout(() => {
+          try { recognitionRef.current?.start(); } catch {}
+        }, 400);
       }
     };
 
@@ -70,6 +80,7 @@ export default function ForumPage() {
         setIsListening(false);
         setNeedsInteraction(true);
       }
+      // no-speech and aborted are normal; let onend handle restart
     };
 
     const tryStart = () => {
@@ -91,10 +102,11 @@ export default function ForumPage() {
       document.removeEventListener('click', startOnInteraction);
       document.removeEventListener('keydown', startOnInteraction);
       document.removeEventListener('touchstart', startOnInteraction);
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
       recognitionRef.current = null;
       try { recognition.stop(); } catch {}
     };
-  }, [showModal]);
+  }, [showModal, isBlind]);
 
   return (
     <div className="space-y-6">
@@ -108,7 +120,7 @@ export default function ForumPage() {
         </button>
       </div>
 
-      {speechSupported && (
+      {isBlind && speechSupported && (
         <div className={`bg-[var(--color-card)] rounded-xl border p-3 transition-colors ${isListening ? 'border-[var(--color-success)] shadow-[0_0_12px_rgba(0,255,136,0.15)]' : 'border-[var(--color-border)]'}`}>
           <div className="flex items-center gap-3">
             <span className={`text-xl ${isListening ? 'animate-pulse' : ''}`}>🎙</span>
