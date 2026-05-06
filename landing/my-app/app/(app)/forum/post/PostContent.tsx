@@ -24,6 +24,21 @@ export default function PostContent() {
   const isBlind = post.author.role === 'blind';
   const isLiked = (JSON.parse(localStorage.getItem('lumina_likes') || '[]') as string[]).includes(post.id);
 
+  const [bookmarked, setBookmarked] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const marks = JSON.parse(localStorage.getItem('lumina_bookmarks') || '[]') as string[];
+    return marks.includes(post.id);
+  });
+
+  const toggleBookmark = () => {
+    const marks = JSON.parse(localStorage.getItem('lumina_bookmarks') || '[]') as string[];
+    const next = marks.includes(post.id)
+      ? marks.filter((id) => id !== post.id)
+      : [...marks, post.id];
+    localStorage.setItem('lumina_bookmarks', JSON.stringify(next));
+    setBookmarked(!bookmarked);
+  };
+
   const handleLike = () => {
     const likes = JSON.parse(localStorage.getItem('lumina_likes') || '[]') as string[];
     if (likes.includes(post.id)) return;
@@ -80,6 +95,13 @@ export default function PostContent() {
             ❤️ {post.likes + (isLiked ? 1 : 0)}
           </button>
           <span className="text-sm text-[var(--color-text-secondary)]">💬 {allComments.length}</span>
+          <button
+            onClick={toggleBookmark}
+            className={`text-sm ${bookmarked ? 'text-[var(--color-warning)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-warning)]'}`}
+            aria-label={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
+          >
+            {bookmarked ? '★ Bookmarked' : '☆ Bookmark'}
+          </button>
         </div>
       </article>
 

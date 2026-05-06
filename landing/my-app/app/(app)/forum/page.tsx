@@ -10,12 +10,23 @@ import { useToast } from '../context/ToastContext';
 export default function ForumPage() {
   const [activeCategory, setActiveCategory] = useState<PostCategory>('All');
   const [showModal, setShowModal] = useState(false);
+  const [showBookmarked, setShowBookmarked] = useState(false);
   const { success } = useToast();
 
+  const bookmarkedIds = useMemo(() => {
+    if (typeof window === 'undefined') return [] as string[];
+    return JSON.parse(localStorage.getItem('lumina_bookmarks') || '[]') as string[];
+  }, []);
+
   const filteredPosts = useMemo(() => {
-    if (activeCategory === 'All') return MOCK_POSTS;
-    return MOCK_POSTS.filter((p) => p.category === activeCategory);
-  }, [activeCategory]);
+    let posts = MOCK_POSTS;
+    if (showBookmarked) {
+      posts = posts.filter((p) => bookmarkedIds.includes(p.id));
+    } else if (activeCategory !== 'All') {
+      posts = posts.filter((p) => p.category === activeCategory);
+    }
+    return posts;
+  }, [activeCategory, showBookmarked, bookmarkedIds]);
 
   return (
     <div className="space-y-6">
@@ -33,9 +44,9 @@ export default function ForumPage() {
         {ALL_CATEGORIES.map((cat) => (
           <button
             key={cat}
-            onClick={() => setActiveCategory(cat)}
+            onClick={() => { setActiveCategory(cat); setShowBookmarked(false); }}
             className={`px-4 py-2 text-sm font-medium whitespace-nowrap border transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] ${
-              activeCategory === cat
+              activeCategory === cat && !showBookmarked
                 ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/30'
                 : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]'
             }`}
@@ -43,6 +54,16 @@ export default function ForumPage() {
             {cat}
           </button>
         ))}
+        <button
+          onClick={() => setShowBookmarked(!showBookmarked)}
+          className={`px-4 py-2 text-sm font-medium whitespace-nowrap border transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] ${
+            showBookmarked
+              ? 'bg-[var(--color-warning)]/10 text-[var(--color-warning)] border-[var(--color-warning)]/30'
+              : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]'
+          }`}
+        >
+          ★ Bookmarked
+        </button>
       </div>
 
       <div className="grid gap-4">
@@ -53,14 +74,18 @@ export default function ForumPage() {
 
       {filteredPosts.length === 0 && (
         <div className="text-center py-16">
-          <div className="text-5xl mb-4">📝</div>
-          <p className="text-[var(--color-text-secondary)] mb-4">No posts yet. Be the first to share!</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors"
-          >
-            New Post
-          </button>
+          <div className="text-5xl mb-4">{showBookmarked ? '★' : '📝'}</div>
+          <p className="text-[var(--color-text-secondary)] mb-4">
+            {showBookmarked ? 'No bookmarked posts yet.' : 'No posts yet. Be the first to share!'}
+          </p>
+          {!showBookmarked && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors"
+            >
+              New Post
+            </button>
+          )}
         </div>
       )}
 

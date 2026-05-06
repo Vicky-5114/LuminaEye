@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Post } from "../forum/types";
 
 interface Props {
@@ -6,6 +7,24 @@ interface Props {
 
 export default function PostCard({ post }: Props) {
   const isBlind = post.author.role === "blind";
+  const isOnline = post.author.name.charCodeAt(0) % 3 === 0;
+
+  const [bookmarked, setBookmarked] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const marks = JSON.parse(localStorage.getItem("lumina_bookmarks") || "[]") as string[];
+    return marks.includes(post.id);
+  });
+
+  const toggleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const marks = JSON.parse(localStorage.getItem("lumina_bookmarks") || "[]") as string[];
+    const next = marks.includes(post.id)
+      ? marks.filter((id) => id !== post.id)
+      : [...marks, post.id];
+    localStorage.setItem("lumina_bookmarks", JSON.stringify(next));
+    setBookmarked(!bookmarked);
+  };
 
   return (
     <a
@@ -23,6 +42,7 @@ export default function PostCard({ post }: Props) {
           {post.author.name[0]}
         </div>
         <span className="text-sm font-medium text-[var(--color-text)]">{post.author.name}</span>
+        {isOnline && <span className="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse"></span>}
         <span
           className={`text-xs px-2 py-0.5 rounded-full font-medium ${
             isBlind
@@ -47,6 +67,13 @@ export default function PostCard({ post }: Props) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
           {post.likes}
         </span>
+        <button
+          onClick={toggleBookmark}
+          className={`text-sm ${bookmarked ? "text-[var(--color-warning)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-warning)]"}`}
+          aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+        >
+          {bookmarked ? "★" : "☆"}
+        </button>
         <span className="ml-auto text-xs px-2 py-0.5 border border-[var(--color-border)] rounded-full">{post.category}</span>
       </div>
     </a>
