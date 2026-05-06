@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "../context/ToastContext";
 
-const typeStyles: Record<string, string> = {
+const typeStyles: Record<import("../context/ToastContext").ToastType, string> = {
   success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   error: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
   info: "border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400",
@@ -13,7 +13,7 @@ export default function ToastContainer() {
   const { toasts, remove } = useToast();
 
   return (
-    <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2" role="region" aria-label="Notifications">
+    <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2" role="region" aria-label="Notifications" aria-live="polite">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -31,7 +31,7 @@ export default function ToastContainer() {
               className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
               aria-label="Dismiss notification"
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </motion.div>
         ))}
