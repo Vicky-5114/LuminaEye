@@ -12,7 +12,7 @@ export default function VideoPage() {
   const { role } = useRole();
 
   if (!role) {
-    return <div className="text-center py-20 text-[var(--color-gray)]">Please log in first</div>;
+    return <div className="text-center py-20 text-[var(--color-text-secondary)]">Please log in first</div>;
   }
 
   return role === 'blind' ? <BlindVideoView /> : <VolunteerVideoView />;
@@ -102,7 +102,7 @@ function VolunteerVideoView() {
   if (activeCall) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-[var(--color-cyan)]">Video Assistance</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-accent)]">Video Assistance</h1>
 
         <div className="flex items-center justify-between bg-[var(--color-card)] rounded-xl border border-[var(--color-border)] p-4 transition-colors">
           <div>
@@ -136,10 +136,10 @@ function VolunteerVideoView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[var(--color-cyan)]">Video Assistance</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-accent)]">Video Assistance</h1>
         <button
           onClick={() => setShowGenerator(!showGenerator)}
-          className="px-3 py-1 text-sm border border-[var(--color-gray)]/30 text-[var(--color-gray)] hover:text-white"
+          className="px-3 py-1 text-sm border border-[var(--color-text-secondary)]/30 text-[var(--color-text-secondary)] hover:text-white"
         >
           {showGenerator ? 'Hide' : 'Show'} Test Generator
         </button>
@@ -150,7 +150,7 @@ function VolunteerVideoView() {
           <p className="text-sm text-[var(--color-text-secondary)] mb-2">Generate a fake help request for solo demo:</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[var(--color-yellow)] text-black font-bold text-sm"
+            className="px-4 py-2 bg-[var(--color-warning)] text-black font-bold text-sm"
           >
             Generate Test Request
           </button>

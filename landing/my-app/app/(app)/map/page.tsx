@@ -181,7 +181,7 @@ export default function MapPage() {
                     {loc.status || 'Open'}
                   </span>
                 </div>
-                <span className="text-xs text-[var(--color-gray)]">{loc.description}</span>
+                <span className="text-xs text-[var(--color-text-secondary)]">{loc.description}</span>
               </div>
             </div>
           ))}
@@ -194,7 +194,7 @@ export default function MapPage() {
             <button onClick={() => setSelectedLocation(null)} className="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)]">✕</button>
 
             <h3 className="text-xl font-bold mb-2">{selectedLocation.name}</h3>
-            <p className="text-sm text-[var(--color-gray)] mb-4">{selectedLocation.description}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">{selectedLocation.description}</p>
 
             {selectedLocation.phone && <p className="text-sm mb-2">📞 {selectedLocation.phone}</p>}
             {selectedLocation.jobs && <p className="text-sm mb-4">💼 Jobs: {selectedLocation.jobs.join(', ')}</p>}

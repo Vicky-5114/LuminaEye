@@ -82,7 +82,7 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
   }
 
   return (
-    <div className="relative bg-black border border-[var(--color-cyan)]/30">
+    <div className="relative bg-black border border-[var(--color-accent)]/30">
       <img
         ref={imgRef}
         alt="Live video stream"
@@ -91,8 +91,8 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
       {!connected && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
           <div className="text-center space-y-2">
-            <div className="text-[var(--color-cyan)] text-4xl animate-pulse">📡</div>
-            <p className="text-[var(--color-gray)]">Waiting for glasses connection...</p>
+            <div className="text-[var(--color-accent)] text-4xl animate-pulse">📡</div>
+            <p className="text-[var(--color-text-secondary)]">Waiting for glasses connection...</p>
           </div>
         </div>
       )}
@@ -100,7 +100,7 @@ export default function VideoPlayer({ url, onDisconnect }: Props) {
         <span className={`px-2 py-0.5 rounded ${connected ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
           {connected ? 'LIVE' : 'OFFLINE'}
         </span>
-        <span className="bg-black/70 text-[var(--color-cyan)] px-2 py-0.5 rounded">
+        <span className="bg-black/70 text-[var(--color-accent)] px-2 py-0.5 rounded">
           {fps} FPS
         </span>
       </div>

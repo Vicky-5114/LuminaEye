@@ -130,7 +130,7 @@ export default function CanvasVideoSimulator({ onDisconnect }: Props) {
   }, [onDisconnect]);
 
   return (
-    <div className="relative bg-black border border-[var(--color-cyan)]/30">
+    <div className="relative bg-black border border-[var(--color-accent)]/30">
       <canvas
         ref={canvasRef}
         width={640}
@@ -140,7 +140,7 @@ export default function CanvasVideoSimulator({ onDisconnect }: Props) {
       />
       <div className="absolute top-2 right-2 flex gap-2 text-xs">
         <span className="bg-green-600 text-white px-2 py-0.5 rounded">LIVE</span>
-        <span className="bg-black/70 text-[var(--color-cyan)] px-2 py-0.5 rounded">{fps} FPS</span>
+        <span className="bg-black/70 text-[var(--color-accent)] px-2 py-0.5 rounded">{fps} FPS</span>
       </div>
     </div>
   );

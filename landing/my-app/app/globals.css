@@ -31,13 +31,13 @@ html[data-theme="dark"] {
 }
 
 @theme inline {
-  --color-void: var(--color-bg);
-  --color-panel: var(--color-card);
-  --color-cyan: var(--color-accent);
-  --color-magenta: var(--color-accent);
-  --color-lime: var(--color-success);
-  --color-yellow: var(--color-warning);
-  --color-gray: var(--color-text-secondary);
+  --color-void: #0a0a0f;
+  --color-panel: #111118;
+  --color-cyan: #00f0ff;
+  --color-magenta: #ff00a0;
+  --color-lime: #00ff88;
+  --color-yellow: #ffdd00;
+  --color-gray: #8a8a9a;
 }
 
 * {

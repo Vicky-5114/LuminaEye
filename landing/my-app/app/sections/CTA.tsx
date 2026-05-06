@@ -173,13 +173,13 @@ export default function CTA() {
             href="/login?role=blind"
             className="px-6 py-3 border border-[var(--color-lime)] text-[var(--color-lime)] hover:bg-[var(--color-lime)] hover:text-black transition-colors font-rajdhani"
           >
-            盲人用户注册
+            Blind User Sign Up
           </a>
           <a
             href="/login?role=volunteer"
             className="px-6 py-3 border border-[var(--color-cyan)] text-[var(--color-cyan)] hover:bg-[var(--color-cyan)] hover:text-black transition-colors font-rajdhani"
           >
-            志愿者注册
+            Volunteer Sign Up
           </a>
         </motion.div>
 
