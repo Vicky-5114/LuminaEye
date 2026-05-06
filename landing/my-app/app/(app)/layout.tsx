@@ -5,6 +5,8 @@ import { RoleProvider, useRole } from './context/RoleContext';
 import { WebSocketProvider, useWebSocketContext } from './context/WebSocketContext';
 import { DemoChannelProvider } from './context/DemoChannelContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from "./context/ToastContext";
+import ToastContainer from "./components/ToastContainer";
 import Navbar from './components/Navbar';
 import HelpNotification from './components/HelpNotification';
 
@@ -68,6 +70,8 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           🆘
         </a>
       )}
+
+      <ToastContainer />
     </div>
   );
 }
@@ -75,13 +79,15 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <RoleProvider>
-        <DemoChannelProvider>
-          <WebSocketProvider>
-            <LayoutInner>{children}</LayoutInner>
-          </WebSocketProvider>
-        </DemoChannelProvider>
-      </RoleProvider>
+      <ToastProvider>
+        <RoleProvider>
+          <DemoChannelProvider>
+            <WebSocketProvider>
+              <LayoutInner>{children}</LayoutInner>
+            </WebSocketProvider>
+          </DemoChannelProvider>
+        </RoleProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
