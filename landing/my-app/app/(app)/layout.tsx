@@ -7,6 +7,7 @@ import { DemoChannelProvider } from './context/DemoChannelContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from "./context/ToastContext";
 import ToastContainer from "./components/ToastContainer";
+import PageTransition from "./components/PageTransition";
 import Navbar from './components/Navbar';
 import HelpNotification from './components/HelpNotification';
 
@@ -51,7 +52,9 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <PageTransition>{children}</PageTransition>
+      </main>
 
       {role === 'volunteer' && (
         <HelpNotification
