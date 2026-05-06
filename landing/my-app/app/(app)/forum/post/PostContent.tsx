@@ -22,7 +22,11 @@ export default function PostContent() {
   }
 
   const isBlind = post.author.role === 'blind';
-  const isLiked = (JSON.parse(localStorage.getItem('lumina_likes') || '[]') as string[]).includes(post.id);
+
+  const [isLiked, setIsLiked] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (JSON.parse(localStorage.getItem('lumina_likes') || '[]') as string[]).includes(post.id);
+  });
 
   const [bookmarked, setBookmarked] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -44,7 +48,7 @@ export default function PostContent() {
     if (likes.includes(post.id)) return;
     likes.push(post.id);
     localStorage.setItem('lumina_likes', JSON.stringify(likes));
-    window.location.reload();
+    setIsLiked(true);
   };
 
   const handleComment = (e: React.FormEvent) => {
@@ -63,7 +67,9 @@ export default function PostContent() {
     window.location.reload();
   };
 
-  const localComments = (JSON.parse(localStorage.getItem('lumina_comments') || '{}') as Record<string, unknown[]>)[post.id] || [];
+  const localComments = typeof window !== 'undefined'
+    ? (JSON.parse(localStorage.getItem('lumina_comments') || '{}') as Record<string, unknown[]>)[post.id] || []
+    : [];
   const allComments = [...localComments, ...post.comments];
 
   return (
